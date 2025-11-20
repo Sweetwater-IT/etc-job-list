@@ -24,40 +24,67 @@ export default function TimelineBody({ jobs, viewType, startDate }: TimelineBody
   }
 
   const getBarPosition = (job: Job) => {
-  const jobStart = job.startDate ? new Date(job.startDate) : null
-  const jobEnd = job.endDate ? new Date(job.endDate) : null
-  
-  if (!jobStart || !jobEnd) {
-    return { left: '0%', width: '0%' } // or skip rendering this bar entirely
-  }
+    const jobStart = job.startDate ? new Date(job.startDate) : new Date()
     
+    // If no end date → make it ongoing → extend far into the future
+    const jobEnd = job.endDate 
+      ? new Date(job.endDate) 
+      : new Date(jobStart.getFullYear() + 10, 0, 1)  // 10 years ahead
+  
     let startUnit = 0
     let endUnit = 0
     let unitWidth = 0
-
+    let totalUnits = 0
+  
     if (viewType === 'week') {
-      unitWidth = 100 / 7
+      totalUnits = 7
+      unitWidth = 100 / totalUnits
       const weekStart = new Date(startDate)
-      startUnit = Math.floor((jobStart.getTime() - weekStart.getTime()) / (1000 * 60 * 60 * 24))
-      endUnit = Math.floor((jobEnd.getTime() - weekStart.getTime()) / (1000 * 60 * 60 * 24))
-    } else if (viewType === 'month') {
-      unitWidth = 48
+      weekStart.setHours(0, 0, 0, 0)
+  
+      const daysFromWeekStart = Math.floor((jobStart.getTime() - weekStart.getTime()) / (1000 * 60 * 60 * 24))
+      startUnit = Math.max(0, daysFromWeekStart)
+  
+      if (job.endDate) {
+        const endDays = Math.floor((jobEnd.getTime() - weekStart.getTime()) / (1000 * 60 * 60 * 24))
+        endUnit = endDays
+      } else {
+        endUnit = totalUnits  // ongoing → fill entire week
+      }
+    } 
+    else if (viewType === 'month') {
+      totalUnits = getDaysInMonth(startDate)
+      unitWidth = 48  // pixels per day
       startUnit = jobStart.getDate() - 1
-      endUnit = jobEnd.getDate() - 1
-    } else {
-      unitWidth = 100 / 12
+      endUnit = job.endDate ? new Date(job.endDate).getDate() - 1 : totalUnits  // fill whole month
+    } 
+    else { // year view
+      totalUnits = 12
+      unitWidth = 100 / totalUnits
       startUnit = jobStart.getMonth()
-      endUnit = jobEnd.getMonth()
+      endUnit = job.endDate ? new Date(job.endDate).getMonth() : 11  // Dec
     }
-
-    const left = viewType === 'month' ? startUnit * unitWidth : startUnit * unitWidth
+  
+    // Clamp values so bar doesn't go off-screen
+    startUnit = Math.max(0, Math.min(startUnit, totalUnits))
+    endUnit = Math.max(startUnit, Math.min(endUnit + 0.99, totalUnits))  // +0.99 so it touches the end
+  
+    const leftValue = viewType === 'month' 
+      ? startUnit * unitWidth 
+      : (startUnit / totalUnits) * 100
+  
+    const widthValue = viewType === 'month'
+      ? (endUnit - startUnit) * unitWidth
+      : ((endUnit - startUnit) / totalUnits) * 100
+  
+    const left = viewType === 'month' ? `${leftValue}px` : `${leftValue}%`
     const width = viewType === 'month' 
-      ? (endUnit - startUnit + 1) * unitWidth 
-      : (endUnit - startUnit + 1) * unitWidth
-
-    return { left: `${left}${viewType === 'month' ? 'px' : '%'}`, width: `${Math.max(width, 20)}${viewType === 'month' ? 'px' : '%'}` }
+      ? `${Math.max(widthValue, 60)}px` 
+      : `${Math.max(widthValue, 8)}%`  // ensure visible
+  
+    return { left, width }
   }
-
+  
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'on-going':
