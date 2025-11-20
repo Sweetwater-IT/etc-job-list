@@ -1,6 +1,5 @@
 'use client'
 
-import { type Job } from '@/lib/dummy-data'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { useEffect, useRef, useState } from 'react'
