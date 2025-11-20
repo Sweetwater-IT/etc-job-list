@@ -10,7 +10,8 @@ import TimelineBody from "./timeline-body"
 import JobsDataTable from "./jobs-data-table"
 import EquipmentSummary from "./equipment-summary"
 import AddJobDialog from "./add-job-dialog"
-import { generateDummyJobs, type Job } from "@/lib/dummy-data"
+import { getJobs } from '@/lib/jobs'
+import type { Job } from '@/lib/types'      
 import { LayoutList, GanttChartSquare, Plus, Package } from "lucide-react"
 
 type ViewType = "week" | "month" | "year"
@@ -20,27 +21,30 @@ export default function GanttChart() {
   const [viewType, setViewType] = useState<ViewType>("month")
   const [displayMode, setDisplayMode] = useState<DisplayMode>("gantt")
   const [searchTerm, setSearchTerm] = useState("")
-  const [statusFilter, setStatusFilter] = useState<string[]>(["on-going", "complete", "pending start"])
+  const [statusFilter, setStatusFilter] = useState<string[]>(["ONGOING", "COMPLETE", "PENDING START"])
   const [projectManagerFilter, setProjectManagerFilter] = useState<string>("all")
   const [branchFilter, setBranchFilter] = useState<string>("all")
   const [signStatusFilter, setSignStatusFilter] = useState<string>("all")
   const [startDate, setStartDate] = useState(new Date(2024, 10, 1))
-  const [jobs, setJobs] = useState<Job[]>(() => generateDummyJobs(150))
+  const { data: jobs, mutate } = useSWR('jobs', getJobs, { fallbackData: [] })
   const [isAddJobDialogOpen, setIsAddJobDialogOpen] = useState(false)
 
-  const filteredJobs = useMemo(() => {
-    const filtered = jobs.filter((job) => {
-      const matchesSearch =
-        job.jobName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        job.location.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        job.contractor.toLowerCase().includes(searchTerm.toLowerCase())
-      const matchesStatus = statusFilter.includes(job.status)
-      const matchesProjectManager = projectManagerFilter === "all" || job.projectManager === projectManagerFilter
-      const matchesBranch = branchFilter === "all" || job.branch === branchFilter
-      const matchesSignStatus =
-        signStatusFilter === "all" || (job.status === "pending start" && job.signStatus === signStatusFilter)
-      return matchesSearch && matchesStatus && matchesProjectManager && matchesBranch && matchesSignStatus
-    })
+const filteredJobs = useMemo(() => {
+  return jobs.filter((job) => {
+    const searchLower = searchTerm.toLowerCase()
+    const matchesSearch = 
+      job.job_number.toLowerCase().includes(searchLower) ||
+      job.job_location?.toLowerCase().includes(searchLower) ||
+      job.contractor?.toLowerCase().includes(searchLower)
+
+    const matchesStatus = statusFilter.includes(job.job_status.toLowerCase())
+    const matchesPM = projectManagerFilter === "all" || job.pm?.toUpperCase() === projectManagerFilter.toUpperCase()
+    const matchesOffice = branchFilter === "all" || job.office?.toLowerCase() === branchFilter.toLowerCase()
+    const matchesSignStatus = signStatusFilter === "all" || job.sign_status === signStatusFilter
+
+    return matchesSearch && matchesStatus && matchesPM && matchesOffice && matchesSignStatus
+  }).sort((a, b) => new Date(b.start_date || '').getTime() - new Date(a.start_date || '').getTime())
+}, [jobs, searchTerm, statusFilter, projectManagerFilter, branchFilter, signStatusFilter])
 
     return filtered.sort((a, b) => {
       const dateA = new Date(a.startDate).getTime()
