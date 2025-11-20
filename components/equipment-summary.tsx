@@ -18,6 +18,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog'
 import { Pencil, Calendar, Package, FileText, FileSpreadsheet, Download, Search } from 'lucide-react'
+import type { Job } from '@/lib/jobs' 
 
 interface EquipmentSummaryProps {
   jobs: Job[]
