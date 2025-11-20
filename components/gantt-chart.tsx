@@ -215,7 +215,11 @@ export default function GanttChart() {
       <div className="flex-1 overflow-hidden">
         {displayMode === "gantt" && (
           <div className="flex h-full">
-            <JobList jobs={filteredJobs} />
+            <JobList 
+              jobs={filteredJobs} 
+              searchTerm={searchTerm} 
+              onSearchChange={setSearchTerm} 
+            />
             <div className="flex-1 flex flex-col overflow-hidden border-l">
               <TimelineHeader viewType={viewType} startDate={startDate} />
               <TimelineBody jobs={filteredJobs} viewType={viewType} startDate={startDate} />
