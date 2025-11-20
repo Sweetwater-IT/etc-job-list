@@ -24,8 +24,12 @@ export default function TimelineBody({ jobs, viewType, startDate }: TimelineBody
   }
 
   const getBarPosition = (job: Job) => {
-    const jobStart = new Date(job.startDate)
-    const jobEnd = new Date(job.endDate)
+  const jobStart = job.startDate ? new Date(job.startDate) : null
+  const jobEnd = job.endDate ? new Date(job.endDate) : null
+  
+  if (!jobStart || !jobEnd) {
+    return { left: '0%', width: '0%' } // or skip rendering this bar entirely
+  }
     
     let startUnit = 0
     let endUnit = 0
