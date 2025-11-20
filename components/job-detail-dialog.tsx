@@ -6,6 +6,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Pencil } from "lucide-react"
+import type { Job } from '@/lib/jobs'
 
 interface JobDetailDialogProps {
   job: Job | null
