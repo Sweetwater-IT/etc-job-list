@@ -1,7 +1,5 @@
 "use client"
-
 import type React from "react"
-
 import { useState } from "react"
 import {
   Dialog,
@@ -28,6 +26,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Plus, X } from "lucide-react"
 
+// ← ONLY CHANGE #1: Import from lib/jobs
+import type { Job } from '@/lib/jobs'
+
+type SignItem = { code: string; description: string; quantity: number }
+
 interface EditJobDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
@@ -47,9 +50,12 @@ export default function EditJobDialog({ open, onOpenChange, job, onSaveJob }: Ed
     setShowConfirmation(false)
   }
 
-  if (job && formData?.id !== job.id) {
-    setFormData(job)
-  }
+  // Sync when parent passes a new job
+  React.useEffect(() => {
+    if (job && formData?.id !== job.id) {
+      setFormData(job)
+    }
+  }, [job, formData?.id])
 
   if (!formData) return null
 
@@ -116,7 +122,7 @@ export default function EditJobDialog({ open, onOpenChange, job, onSaveJob }: Ed
                   <TabsTrigger value="signs">Signs</TabsTrigger>
                 </TabsList>
 
-                {/* Admin Info Tab */}
+                {/* Admin Info */}
                 <TabsContent value="admin" className="space-y-4 py-4">
                   <div className="grid gap-2">
                     <Label htmlFor="edit-jobName">Job Name</Label>
@@ -124,7 +130,6 @@ export default function EditJobDialog({ open, onOpenChange, job, onSaveJob }: Ed
                       id="edit-jobName"
                       value={formData.jobName}
                       onChange={(e) => setFormData({ ...formData, jobName: e.target.value })}
-                      required
                     />
                   </div>
 
@@ -135,16 +140,14 @@ export default function EditJobDialog({ open, onOpenChange, job, onSaveJob }: Ed
                         id="edit-jobNumber"
                         value={formData.jobNumber}
                         onChange={(e) => setFormData({ ...formData, jobNumber: e.target.value })}
-                        required
                       />
                     </div>
                     <div className="grid gap-2">
                       <Label htmlFor="edit-bidNumber">Bid Number</Label>
                       <Input
                         id="edit-bidNumber"
-                        value={formData.bidNumber}
-                        onChange={(e) => setFormData({ ...formData, bidNumber: e.target.value })}
-                        required
+                        value={formData.bidNumber ?? ""}
+                        onChange={(e) => setFormData({ ...formData, bidNumber: e.target.value || null })}
                       />
                     </div>
                   </div>
@@ -153,9 +156,8 @@ export default function EditJobDialog({ open, onOpenChange, job, onSaveJob }: Ed
                     <Label htmlFor="edit-location">Location</Label>
                     <Input
                       id="edit-location"
-                      value={formData.location}
+                      value={formData.location ?? ""}
                       onChange={(e) => setFormData({ ...formData, location: e.target.value })}
-                      required
                     />
                   </div>
 
@@ -163,9 +165,8 @@ export default function EditJobDialog({ open, onOpenChange, job, onSaveJob }: Ed
                     <Label htmlFor="edit-contractor">Contractor</Label>
                     <Input
                       id="edit-contractor"
-                      value={formData.contractor}
+                      value={formData.contractor ?? ""}
                       onChange={(e) => setFormData({ ...formData, contractor: e.target.value })}
-                      required
                     />
                   </div>
 
@@ -173,17 +174,17 @@ export default function EditJobDialog({ open, onOpenChange, job, onSaveJob }: Ed
                     <div className="grid gap-2">
                       <Label htmlFor="edit-projectManager">Project Manager</Label>
                       <Select
-                        value={formData.projectManager}
+                        value={formData.projectManager.toUpperCase()}
                         onValueChange={(value) => setFormData({ ...formData, projectManager: value })}
                       >
                         <SelectTrigger id="edit-projectManager">
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="john nelson">John Nelson</SelectItem>
-                          <SelectItem value="larry long">Larry Long</SelectItem>
-                          <SelectItem value="jim redden">Jim Redden</SelectItem>
-                          <SelectItem value="richard gresh">Richard Gresh</SelectItem>
+                          <SelectItem value="NELSON">Nelson</SelectItem>
+                          <SelectItem value="GRESH">Gresh</SelectItem>
+                          <SelectItem value="LONG">Long</SelectItem>
+                          <SelectItem value="REDDEN">Redden</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
@@ -214,18 +215,15 @@ export default function EditJobDialog({ open, onOpenChange, job, onSaveJob }: Ed
                         type="date"
                         value={formData.startDate}
                         onChange={(e) => setFormData({ ...formData, startDate: e.target.value })}
-                        required
                       />
                     </div>
-
                     <div className="grid gap-2">
                       <Label htmlFor="edit-endDate">End Date</Label>
                       <Input
                         id="edit-endDate"
                         type="date"
-                        value={formData.endDate}
-                        onChange={(e) => setFormData({ ...formData, endDate: e.target.value })}
-                        required
+                        value={formData.endDate ?? ""}
+                        onChange={(e) => setFormData({ ...formData, endDate: e.target.value || null })}
                       />
                     </div>
                   </div>
@@ -252,7 +250,7 @@ export default function EditJobDialog({ open, onOpenChange, job, onSaveJob }: Ed
                       <Label htmlFor="edit-signStatus">Sign Status</Label>
                       <Select
                         value={formData.signStatus || "not received"}
-                        onValueChange={(value) => setFormData({ ...formData, signStatus: value as Job["signStatus"] })}
+                        onValueChange={(value) => setFormData({ ...formData, signStatus: value })}
                       >
                         <SelectTrigger id="edit-signStatus">
                           <SelectValue />
@@ -296,15 +294,12 @@ export default function EditJobDialog({ open, onOpenChange, job, onSaveJob }: Ed
                       Add Sign
                     </Button>
                   </div>
-
                   <div className="space-y-3 max-h-96 overflow-y-auto">
                     {formData.signList && formData.signList.length > 0 ? (
                       formData.signList.map((sign, index) => (
                         <div key={index} className="grid grid-cols-[1fr_2fr_100px_40px] gap-2 items-end">
                           <div className="grid gap-1">
-                            <Label htmlFor={`sign-code-${index}`} className="text-xs">
-                              Code
-                            </Label>
+                            <Label htmlFor={`sign-code-${index}`} className="text-xs">Code</Label>
                             <Input
                               id={`sign-code-${index}`}
                               value={sign.code}
@@ -313,9 +308,7 @@ export default function EditJobDialog({ open, onOpenChange, job, onSaveJob }: Ed
                             />
                           </div>
                           <div className="grid gap-1">
-                            <Label htmlFor={`sign-desc-${index}`} className="text-xs">
-                              Description
-                            </Label>
+                            <Label htmlFor={`sign-desc-${index}`} className="text-xs">Description</Label>
                             <Input
                               id={`sign-desc-${index}`}
                               value={sign.description}
@@ -324,26 +317,16 @@ export default function EditJobDialog({ open, onOpenChange, job, onSaveJob }: Ed
                             />
                           </div>
                           <div className="grid gap-1">
-                            <Label htmlFor={`sign-qty-${index}`} className="text-xs">
-                              Qty
-                            </Label>
+                            <Label htmlFor={`sign-qty-${index}`} className="text-xs">Qty</Label>
                             <Input
                               id={`sign-qty-${index}`}
                               type="number"
                               min="1"
                               value={sign.quantity}
-                              onChange={(e) =>
-                                handleSignChange(index, "quantity", Number.parseInt(e.target.value) || 1)
-                              }
+                              onChange={(e) => handleSignChange(index, "quantity", Number.parseInt(e.target.value) || 1)}
                             />
                           </div>
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleRemoveSign(index)}
-                            className="h-9"
-                          >
+                          <Button type="button" variant="ghost" size="sm" onClick={() => handleRemoveSign(index)} className="h-9">
                             <X className="h-4 w-4" />
                           </Button>
                         </div>
@@ -373,8 +356,7 @@ export default function EditJobDialog({ open, onOpenChange, job, onSaveJob }: Ed
           <AlertDialogHeader>
             <AlertDialogTitle>Confirm Changes</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to save the changes to this job? This action will update the job details, equipment,
-              and signs.
+              Are you sure you want to save the changes to this job?
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
