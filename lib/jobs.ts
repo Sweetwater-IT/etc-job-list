@@ -65,8 +65,7 @@ export async function getJobs(): Promise<Job[]> {
   const { data, error } = await supabase
     .from('etc_master_jobs')
     .select('*')
-    .order('start_date', { ascending: false })
-    .order('start_date', { nullsLast: true })
+    .order('start_date', { ascending: false, nullsLast: true } as any)
 
   if (error) {
     console.error('Supabase error:', error)
