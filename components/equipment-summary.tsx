@@ -1,5 +1,4 @@
 'use client'
-
 import { useState, useMemo } from 'react'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
@@ -18,7 +17,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog'
 import { Pencil, Calendar, Package, FileText, FileSpreadsheet, Download, Search } from 'lucide-react'
-import type { Job } from '@/lib/jobs' 
+import type { Job } from '@/lib/jobs'
 
 interface EquipmentSummaryProps {
   jobs: Job[]
@@ -27,55 +26,26 @@ interface EquipmentSummaryProps {
 export default function EquipmentSummary({ jobs }: EquipmentSummaryProps) {
   const today = new Date().toISOString().split('T')[0]
   const [masterDate, setMasterDate] = useState(today)
-  
+
   const thirtyDaysOut = new Date()
   thirtyDaysOut.setDate(thirtyDaysOut.getDate() + 30)
   const [forecastDate, setForecastDate] = useState(thirtyDaysOut.toISOString().split('T')[0])
-  
+
   const [summaryTab, setSummaryTab] = useState<'equipment' | 'signs'>('equipment')
   const [equipmentSearch, setEquipmentSearch] = useState('')
   const [signSearch, setSignSearch] = useState('')
-  
-  const [equipmentInventory, setEquipmentInventory] = useState<Record<string, number>>({
-    '4\' TYPE III': 150,
-    '6\' TYPE III': 120,
-    '8\' TYPE III': 80,
-    'SQ POST': 500,
-    'H STAND': 300,
-    'VP': 250,
-    'SHARPS': 400,
-    'Y/B LITE': 100,
-    'R/B LITE': 100,
-    'W/B LITE': 100,
-    'TMA': 25,
-    'C LITE': 75,
-    'S. TRL': 15,
-    'A. BOARD': 20,
-    'M. BOARD': 15,
-    'UC POST': 350,
-    'SEQ LIGHT': 120,
-  })
-  const [signsInventory, setSignsInventory] = useState<Record<string, number>>({
-    'W20-2': 60,
-    'R1-1': 80,
-    'W1-1': 70,
-    'W3-1': 50,
-    'W20-1': 90,
-    'W21-1': 40,
-    'W4-2': 55,
-    'R2-1': 75,
-    'W11-1': 45,
-    'W20-7': 65,
-  })
+
+  // ← START EMPTY — this is correct!
+  const [equipmentInventory, setEquipmentInventory] = useState<Record<string, number>>({})
+  const [signsInventory, setSignsInventory] = useState<Record<string, number>>({})
+
   const [editingEquipment, setEditingEquipment] = useState<string | null>(null)
   const [editingSign, setEditingSign] = useState<string | null>(null)
-  
   const [showNeedToOrderReport, setShowNeedToOrderReport] = useState(false)
   const [reportTab, setReportTab] = useState<'equipment' | 'signs'>('equipment')
 
   const masterDateObj = new Date(masterDate)
   const forecastDateObj = new Date(forecastDate)
-  
   const daysBetween = Math.round((forecastDateObj.getTime() - masterDateObj.getTime()) / (1000 * 60 * 60 * 24))
 
   const equipmentSummary = useMemo(() => {
@@ -88,7 +58,7 @@ export default function EquipmentSummary({ jobs }: EquipmentSummaryProps) {
       needToOrder: number
     }[] = []
 
-    const equipmentKeys = Object.keys(jobs[0]?.equipment || {}) as (keyof Equipment)[]
+    const equipmentKeys = Object.keys(jobs[0]?.equipment || {}) as string[]
 
     equipmentKeys.forEach((key) => {
       let inUse = 0
@@ -97,25 +67,23 @@ export default function EquipmentSummary({ jobs }: EquipmentSummaryProps) {
 
       jobs.forEach((job) => {
         const jobStart = new Date(job.startDate)
-        const jobEnd = new Date(job.endDate)
-        const qty = job.equipment[key]
+        const jobEnd = job.endDate ? new Date(job.endDate) : new Date(2099, 11, 31)
+        const qty = job.equipment[key] ?? 0
 
-        if (qty > 0) {
-          if (jobStart <= masterDateObj && jobEnd >= masterDateObj && job.status === 'on-going') {
-            inUse += qty
-          }
-          
-          if (jobStart >= masterDateObj && jobStart <= forecastDateObj) {
-            goingOut += qty
-          }
-          
-          if (jobEnd >= masterDateObj && jobEnd <= forecastDateObj && (job.status === 'on-going' || job.status === 'complete')) {
-            returning += qty
-          }
+        if (qty === 0) return
+
+        if (jobStart <= masterDateObj && jobEnd >= masterDateObj && job.status === 'on-going') {
+          inUse += qty
+        }
+        if (jobStart >= masterDateObj && jobStart <= forecastDateObj) {
+          goingOut += qty
+        }
+        if (jobEnd >= masterDateObj && jobEnd <= forecastDateObj && (job.status === 'on-going' || job.status === 'complete')) {
+          returning += qty
         }
       })
 
-      const currentInventory = equipmentInventory[key] ?? 100 // Default starting inventory
+      const currentInventory = equipmentInventory[key] ?? 0
       const availableAfterProjection = currentInventory + returning - inUse - goingOut
       const needToOrder = availableAfterProjection < 0 ? Math.abs(availableAfterProjection) : 0
 
@@ -133,16 +101,12 @@ export default function EquipmentSummary({ jobs }: EquipmentSummaryProps) {
   }, [jobs, masterDateObj, forecastDateObj, equipmentInventory])
 
   const filteredEquipmentSummary = useMemo(() => {
-    if (!equipmentSearch.trim()) {
-      return equipmentSummary
-    }
-    
-    const searchLower = equipmentSearch.toLowerCase()
-    return equipmentSummary.filter(item => 
-      item.name.toLowerCase().includes(searchLower)
-    )
+    if (!equipmentSearch.trim()) return equipmentSummary
+    const lower = equipmentSearch.toLowerCase()
+    return equipmentSummary.filter(item => item.name.toLowerCase().includes(lower))
   }, [equipmentSummary, equipmentSearch])
 
+  // Signs logic stays the same — but starts empty
   const signsSummary = useMemo(() => {
     const summary: {
       code: string
@@ -158,30 +122,21 @@ export default function EquipmentSummary({ jobs }: EquipmentSummaryProps) {
 
     jobs.forEach((job) => {
       if (!job.signList) return
-
       const jobStart = new Date(job.startDate)
-      const jobEnd = new Date(job.endDate)
+      const jobEnd = job.endDate ? new Date(job.endDate) : new Date(2099, 11, 31)
 
       job.signList.forEach((sign) => {
         if (!signMap.has(sign.code)) {
-          signMap.set(sign.code, {
-            description: sign.description,
-            inUse: 0,
-            goingOut: 0,
-            returning: 0,
-          })
+          signMap.set(sign.code, { description: sign.description, inUse: 0, goingOut: 0, returning: 0 })
         }
-
         const current = signMap.get(sign.code)!
 
         if (jobStart <= masterDateObj && jobEnd >= masterDateObj && job.status === 'on-going') {
           current.inUse += sign.quantity
         }
-        
         if (jobStart >= masterDateObj && jobStart <= forecastDateObj) {
           current.goingOut += sign.quantity
         }
-        
         if (jobEnd >= masterDateObj && jobEnd <= forecastDateObj && (job.status === 'on-going' || job.status === 'complete')) {
           current.returning += sign.quantity
         }
@@ -189,7 +144,7 @@ export default function EquipmentSummary({ jobs }: EquipmentSummaryProps) {
     })
 
     signMap.forEach((value, code) => {
-      const currentInventory = signsInventory[code] ?? 50 // Default starting inventory for signs
+      const currentInventory = signsInventory[code] ?? 0
       const availableAfterProjection = currentInventory + value.returning - value.inUse - value.goingOut
       const needToOrder = availableAfterProjection < 0 ? Math.abs(availableAfterProjection) : 0
 
@@ -208,14 +163,10 @@ export default function EquipmentSummary({ jobs }: EquipmentSummaryProps) {
   }, [jobs, masterDateObj, forecastDateObj, signsInventory])
 
   const filteredSignsSummary = useMemo(() => {
-    if (!signSearch.trim()) {
-      return signsSummary
-    }
-    
-    const searchLower = signSearch.toLowerCase()
-    return signsSummary.filter(item => 
-      item.code.toLowerCase().includes(searchLower) || 
-      item.description.toLowerCase().includes(searchLower)
+    if (!signSearch.trim()) return signsSummary
+    const lower = signSearch.toLowerCase()
+    return signsSummary.filter(item =>
+      item.code.toLowerCase().includes(lower) || item.description.toLowerCase().includes(lower)
     )
   }, [signsSummary, signSearch])
 
@@ -229,45 +180,32 @@ export default function EquipmentSummary({ jobs }: EquipmentSummaryProps) {
     setEditingSign(null)
   }
 
-  const needToOrderEquipment = useMemo(() => {
-    return equipmentSummary.filter(item => item.needToOrder > 0)
-  }, [equipmentSummary])
-
-  const needToOrderSigns = useMemo(() => {
-    return signsSummary.filter(item => item.needToOrder > 0)
-  }, [signsSummary])
+  const needToOrderEquipment = useMemo(() => equipmentSummary.filter(i => i.needToOrder > 0), [equipmentSummary])
+  const needToOrderSigns = useMemo(() => signsSummary.filter(i => i.needToOrder > 0), [signsSummary])
 
   const exportToExcel = () => {
     const items = reportTab === 'equipment' ? needToOrderEquipment : needToOrderSigns
-  
-    if (items.length === 0) {
-      alert('No items to export')
-      return
-    }
-  
-    let csvContent = ''
-  
-    if (reportTab === 'equipment') {
-      csvContent = 'Equipment,Current Inventory,In Use,Going Out,Returning,Need to Order\n'
-      items.forEach(item => {
-        // "item" is equipment → has .name
-        csvContent += `${(item as any).name},${(item as any).currentInventory},${(item as any).inUse},${(item as any).goingOut},${(item as any).returning},${(item as any).needToOrder}\n`
-      })
-    } else {
-      csvContent = 'MUTCD Code,Description,Current Inventory,In Use,Going Out,Returning,Need to Order\n'
-      items.forEach(item => {
-        // "item" is sign → has .code and .description
-        csvContent += `${(item as any).code},${(item as any).description},${(item as any).currentInventory},${(item as any).inUse},${(item as any).goingOut},${(item as any).returning},${(item as any).needToOrder}\n`
-      })
-    }
-  
-    const blob = new Blob([csvContent], { type: 'text/csv' })
-    const url = window.URL.createObjectURL(blob)
+    if (items.length === 0) return alert('No items to export')
+
+    let csv = reportTab === 'equipment'
+      ? 'Equipment,Current Inventory,In Use,Going Out,Returning,Need to Order\n'
+      : 'MUTCD Code,Description,Current Inventory,In Use,Going Out,Returning,Need to Order\n'
+
+    items.forEach(item => {
+      if (reportTab === 'equipment') {
+        csv += `${item.name},${item.currentInventory},${item.inUse},${item.goingOut},${item.returning},${item.needToOrder}\n`
+      } else {
+        csv += `${item.code},${item.description},${item.currentInventory},${item.inUse},${item.goingOut},${item.returning},${item.needToOrder}\n`
+      }
+    })
+
+    const blob = new Blob([csv], { type: 'text/csv' })
+    const url = URL.createObjectURL(blob)
     const a = document.createElement('a')
     a.href = url
-    a.download = `need-to-order-${reportTab}-${new Date().toISOString().split('T')[0]}.csv`
+    a.download = `need-to-order-${reportTab}-${today}.csv`
     a.click()
-    window.URL.revokeObjectURL(url)
+    URL.revokeObjectURL(url)
   }
   
   return (
