@@ -71,17 +71,38 @@ export default function GanttChart() {
     return () => clearInterval(interval)
   }, [mutate])
 
-  const handleAddJob = async (newJob: any) => {
-    await mutate(async () => {
-      await fetch('/api/jobs', {
+  const handleAddJob = async (newJob: Job) => {
+    try {
+      const res = await fetch('/api/jobs', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(newJob),
+        body: JSON.stringify(newJob), // newJob is already in frontend shape
       })
-      return getJobs()
-    }, { revalidate: true })
+      if (!res.ok) throw new Error('Failed to add job')
+      const addedJob = await res.json()
+      mutate(jobs => [...jobs, addedJob], false) // optimistic update
+      mutate() // revalidate
+    } catch (err) {
+      alert('Failed to add job')
+    }
   }
-
+  
+  const handleUpdateJob = async (updatedJob: Job) => {
+    try {
+      const res = await fetch(`/api/jobs/${updatedJob.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updatedJob),
+      })
+      if (!res.ok) throw new Error('Failed to update job')
+      const savedJob = await res.json()
+      mutate(jobs => jobs.map(j => j.id === savedJob.id ? savedJob : j), false)
+      mutate()
+    } catch (err) {
+      alert('Failed to save changes')
+    }
+  }
+  
   const handlePrevious = () => {
     const newDate = new Date(startDate)
     if (viewType === "week") newDate.setDate(newDate.getDate() - 7)
