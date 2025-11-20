@@ -1,7 +1,6 @@
 'use client'
 
 import { useState } from 'react'
-import { type Job } from '@/lib/dummy-data'
 import JobDetailDialog from './job-detail-dialog'
 import JobTooltip from './job-tooltip'
 
