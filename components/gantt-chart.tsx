@@ -1,6 +1,5 @@
 'use client'
-
-import { useState, useMemo } from "react"
+import { useState, useMemo, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import {
@@ -17,7 +16,7 @@ import JobsDataTable from "./jobs-data-table"
 import EquipmentSummary from "./equipment-summary"
 import AddJobDialog from "./add-job-dialog"
 import { getJobs } from '@/lib/jobs'
-import type { Job } from '@/lib/types'
+import type { Job } from '@/lib/jobs'          // ← THIS IS THE ONLY CHANGE AT THE TOP
 import useSWR from 'swr'
 import { LayoutList, GanttChartSquare, Plus, Package } from "lucide-react"
 
@@ -43,22 +42,34 @@ export default function GanttChart() {
       .filter((job) => {
         const search = searchTerm.toLowerCase()
         const matchesSearch =
-          job.job_number.toLowerCase().includes(search) ||
-          (job.job_location || "").toLowerCase().includes(search) ||
+          job.jobNumber.toLowerCase().includes(search) ||
+          (job.location || "").toLowerCase().includes(search) ||
           (job.contractor || "").toLowerCase().includes(search)
 
-        const matchesStatus = statusFilter.includes(job.job_status)
-        const matchesPM = pmFilter === "all" || job.pm === pmFilter
-        const matchesOffice = officeFilter === "all" || job.office === officeFilter
+        // Map frontend status → DB status for filtering
+        const dbStatus = job.status === 'on-going' ? 'ONGOING' :
+                         job.status === 'complete' ? 'COMPLETE' :
+                         job.status === 'pending start' ? 'PENDING START' : 'NOT STARTED'
+        const matchesStatus = statusFilter.includes(dbStatus)
+
+        const matchesPM = pmFilter === "all" || job.projectManager.toUpperCase() === pmFilter
+        const matchesOffice = officeFilter === "all" || job.branch.toLowerCase() === officeFilter.toLowerCase()
 
         return matchesSearch && matchesStatus && matchesPM && matchesOffice
       })
       .sort((a, b) => {
-        const dateA = a.start_date ? new Date(a.start_date).getTime() : 0
-        const dateB = b.start_date ? new Date(b.start_date).getTime() : 0
+        const dateA = a.startDate ? new Date(a.startDate).getTime() : 0
+        const dateB = b.startDate ? new Date(b.startDate).getTime() : 0
         return dateB - dateA
       })
   }, [jobs, searchTerm, statusFilter, pmFilter, officeFilter])
+
+  // Optional: real-time updates
+  useEffect(() => {
+    mutate() // refresh on mount
+    const interval = setInterval(() => mutate(), 30_000) // refresh every 30s
+    return () => clearInterval(interval)
+  }, [mutate])
 
   const handleAddJob = async (newJob: any) => {
     await mutate(async () => {
@@ -127,9 +138,9 @@ export default function GanttChart() {
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All Offices</SelectItem>
-              <SelectItem value="Hatfield">Hatfield</SelectItem>
-              <SelectItem value="Turbotville">Turbotville</SelectItem>
-              <SelectItem value="Bedford">Bedford</SelectItem>
+              <SelectItem value="hatfield">Hatfield</SelectItem>
+              <SelectItem value="turbotville">Turbotville</SelectItem>
+              <SelectItem value="bedford">Bedford</SelectItem>
             </SelectContent>
           </Select>
         </div>
