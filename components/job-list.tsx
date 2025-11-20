@@ -25,7 +25,8 @@ export default function JobList({ jobs, searchTerm, onSearchChange }: JobListPro
   const endIndex = startIndex + jobsPerPage
   const paginatedJobs = jobs.slice(startIndex, endIndex)
   
-  const formatDate = (date: string | Date) => {
+  const formatDate = (date: string | Date | null) => {
+    if (!date) return "—"
     const d = typeof date === 'string' ? new Date(date) : date
     return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
   }
