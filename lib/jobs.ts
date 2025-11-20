@@ -1,10 +1,10 @@
 // lib/jobs.ts
 import { supabase } from '@/lib/supabase'
-import type { Database } from '@/lib/supabase/types'
+import type { Database } from '@/lib/etc-job-types'   // ← ONLY CHANGE: correct path!
 
 type DbJob = Database['public']['Tables']['etc_master_jobs']['Row']
 
-// This is the shape your entire frontend expects
+// Frontend shape (camelCase, nice names)
 export type Job = {
   id: number
   jobNumber: string
@@ -22,29 +22,27 @@ export type Job = {
   signList?: Array<{ code: string; description: string; quantity: number }>
 }
 
-// Mapper: DB → Frontend
+// Convert raw DB row → nice frontend object
 const mapDbToJob = (db: DbJob): Job => ({
   id: db.id,
   jobNumber: db.job_number,
   bidNumber: db.bid_number,
-  jobName: db.job_location || db.job_number, // fallback if no location
+  jobName: db.job_location || db.job_number,
   location: db.job_location,
   contractor: db.contractor || '',
-  projectManager: db.pm || 'NELSON',
+  projectManager: (db.pm || 'NELSON').toUpperCase(),
   branch: (db.office || 'Hatfield').toLowerCase(),
   startDate: db.start_date || '',
   endDate: db.end_date || null,
   status:
-    db.job_status === 'ONGOING'
-      ? 'on-going'
-      : db.job_status === 'COMPLETE'
-      ? 'complete'
-      : 'pending start',
+    db.job_status === 'ONGOING' ? 'on-going' :
+    db.job_status === 'COMPLETE' ? 'complete' :
+    'pending start',
   signStatus: db.sign_status || undefined,
   equipment: {
-    "4' TYPE III": db['4_type_3'] ?? 0,
-    "6' TYPE III": db['6_type_3'] ?? 0,
-    "8' TYPE III": db['8_type_3'] ?? 0,
+    "4' TYPE III": db["4_type_3"] ?? 0,
+    "6' TYPE III": db["6_type_3"] ?? 0,
+    "8' TYPE III": db["8_type_3"] ?? 0,
     'SQ POST': db.sq_post ?? 0,
     'H STAND': db.h_stand ?? 0,
     VP: db.vp ?? 0,
@@ -60,7 +58,7 @@ const mapDbToJob = (db: DbJob): Job => ({
     'UC POST': db.uc_post ?? 0,
     'SEQ LIGHT': db.seq_light ?? 0,
   },
-  signList: [], // You can populate this later from a separate table or JSON column if needed
+  signList: [], // fill later if you add a signs table
 })
 
 export async function getJobs(): Promise<Job[]> {
@@ -70,12 +68,9 @@ export async function getJobs(): Promise<Job[]> {
     .order('start_date', { ascending: false, nullsLast: true })
 
   if (error) {
-    console.error('Supabase fetch error:', error)
+    console.error('Supabase error:', error)
     throw error
   }
 
   return data.map(mapDbToJob)
 }
-
-// Optional: keep your API routes for server-side mutations if you want
-// But for now, you can also call Supabase directly from client if preferred
