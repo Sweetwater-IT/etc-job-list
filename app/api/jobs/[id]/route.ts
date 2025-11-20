@@ -1,29 +1,39 @@
-export const PATCH = async (request: Request, { params }: { params: { id: string } }) => {
-  try {
-    const updates = await request.json()
+import { supabase } from '@/lib/supabase'
+import { NextResponse } from 'next/server'
 
-    const { data, error } = await supabase
-      .from('etc_master_jobs')
-      .update(updates)
-      .eq('id', params.id)
-      .select()
-      .single()
+// PATCH – update job
+export async function PATCH(
+  request: Request,
+  { params }: { params: Promise<{ id: string }> }   // ← this is the fix
+) {
+  const { id } = await params   // ← await the promise
+  const updates = await request.json()
 
-    if (error) {
-      return NextResponse.json({ error: error.message }, { status: 500 })
-    }
+  const { data, error } = await supabase
+    .from('etc_master_jobs')
+    .update(updates)
+    .eq('id', id)
+    .select()
+    .single()
 
-    return NextResponse.json(data)
-  } catch (err) {
-    return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 })
+  if (error) {
+    return NextResponse.json({ error: error.message }, { status: 500 })
   }
+
+  return NextResponse.json(data)
 }
 
-export const DELETE = async (request: Request, { params }: { params: { id: string } }) => {
+// DELETE – delete job
+export async function DELETE(
+  request: Request,
+  { params }: { params: Promise<{ id: string }> }   // ← same fix here
+) {
+  const { id } = await params   // ← await it
+
   const { error } = await supabase
     .from('etc_master_jobs')
     .delete()
-    .eq('id', params.id)
+    .eq('id', id)
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 })
