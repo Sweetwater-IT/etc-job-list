@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import JobDetailDialog from './job-detail-dialog'
 import JobTooltip from './job-tooltip'
+import type { Job } from '@/lib/jobs'
 
 interface TimelineBodyProps {
   jobs: Job[]
