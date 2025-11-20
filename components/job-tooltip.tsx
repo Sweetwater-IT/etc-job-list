@@ -3,6 +3,7 @@
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { useEffect, useRef, useState } from 'react'
+import type { Job } from '@/lib/jobs'
 
 interface JobTooltipProps {
   job: Job
