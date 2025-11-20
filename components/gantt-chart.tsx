@@ -247,10 +247,14 @@ export default function GanttChart() {
             </div>
           </div>
         )}
-        {{displayMode === "list" && (
+
+        {displayMode === "list" && (
           <JobsDataTable jobs={filteredJobs} onUpdateJob={handleUpdateJob} />
         )}
-        {displayMode === "equipment-summary" && <EquipmentSummary jobs={jobs} />}
+
+        {displayMode === "equipment-summary" && (
+          <EquipmentSummary jobs={jobs} />
+        )}
       </div>
 
       <AddJobDialog
