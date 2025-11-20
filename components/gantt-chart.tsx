@@ -80,7 +80,7 @@ export default function GanttChart() {
       })
       if (!res.ok) throw new Error('Failed to add job')
       const addedJob = await res.json()
-      mutate(jobs => [...jobs, addedJob], false) // optimistic update
+      mutate(jobs => [...(jobs ?? []), addedJob], false)
       mutate() // revalidate
     } catch (err) {
       alert('Failed to add job')
@@ -96,7 +96,7 @@ export default function GanttChart() {
       })
       if (!res.ok) throw new Error('Failed to update job')
       const savedJob = await res.json()
-      mutate(jobs => jobs.map(j => j.id === savedJob.id ? savedJob : j), false)
+      mutate(jobs => (jobs ?? []).map(j => j.id === savedJob.id ? savedJob : j), false)
       mutate()
     } catch (err) {
       alert('Failed to save changes')
