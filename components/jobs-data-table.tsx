@@ -75,7 +75,8 @@ export default function JobsDataTable({ jobs, onUpdateJob }: JobsDataTableProps)
     )
   }
 
-  const formatDate = (date: Date | string) => {
+  const formatDate = (date: string | Date | null) => {
+    if (!date) return "—"
     const dateObj = typeof date === "string" ? new Date(date) : date
     return dateObj.toLocaleDateString("en-US", {
       month: "short",
