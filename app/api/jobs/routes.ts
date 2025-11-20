@@ -8,20 +8,30 @@ export async function GET() {
     .select('*')
     .order('id', { ascending: true })
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  if (error) {
+    return NextResponse.json({ error: error.message }, { status: 500 })
+  }
+
   return NextResponse.json(data)
 }
 
 // POST – add new job
 export async function POST(request: Request) {
-  const job = await request.json()
+  try {
+    const job = await request.json()
 
-  const { data, error } = await supabase
-    .from('etc_master_jobs')
-    .insert(job)
-    .select()
-    .single()
+    const { data, error } = await supabase
+      .from('etc_master_jobs')
+      .insert([job])
+      .select()
+      .single()
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
-  return NextResponse.json(data, { status: 201 })
+    if (error) {
+      return NextResponse.json({ error: error.message }, { status: 500 })
+    }
+
+    return NextResponse.json(data, { status: 201 })
+  } catch (err) {
+    return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 })
+  }
 }
