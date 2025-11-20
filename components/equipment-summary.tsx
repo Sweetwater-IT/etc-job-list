@@ -1,7 +1,6 @@
 'use client'
 
 import { useState, useMemo } from 'react'
-import { type Job, type Equipment } from '@/lib/dummy-data'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import {
