@@ -1,5 +1,4 @@
 'use client'
-
 import { useState } from 'react'
 import {
   Dialog,
@@ -19,11 +18,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+import type { Job } from '@/lib/jobs'   // ← ADD THIS IMPORT
 
 interface AddJobDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
-  onAddJob: (job: any) => void
+  onAddJob: (job: Job) => void      // ← now expects the correct shape
 }
 
 export default function AddJobDialog({ open, onOpenChange, onAddJob }: AddJobDialogProps) {
@@ -32,15 +32,13 @@ export default function AddJobDialog({ open, onOpenChange, onAddJob }: AddJobDia
     bid_number: '',
     job_location: '',
     contractor: '',
-    rate: '',
-    fringe: '',
-    is_rated: true,
     start_date: '',
     end_date: '',
-    type: 'Public',
-    office: 'Hatfield',
     pm: 'NELSON',
-    job_status: 'ONGOING',
+    office: 'Hatfield',
+    type: 'Public' as 'Public' | 'Private',
+    job_status: 'ONGOING' as 'ONGOING' | 'COMPLETE' | 'PENDING START' | 'NOT STARTED',
+    // Equipment defaults
     "4_type_3": 0,
     "6_type_3": 0,
     "8_type_3": 0,
@@ -63,21 +61,57 @@ export default function AddJobDialog({ open, onOpenChange, onAddJob }: AddJobDia
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
 
-    onAddJob(formData)
+    // Convert form → frontend Job shape
+    const newJob: Job = {
+      id: 0, // temporary — Supabase will assign real ID
+      jobNumber: formData.job_number,
+      bidNumber: formData.bid_number || null,
+      jobName: formData.job_location || formData.job_number,
+      location: formData.job_location,
+      contractor: formData.contractor || '',
+      projectManager: formData.pm,
+      branch: formData.office.toLowerCase(),
+      startDate: formData.start_date,
+      endDate: formData.end_date || null,
+      status: formData.job_status === 'ONGOING' ? 'on-going' :
+              formData.job_status === 'COMPLETE' ? 'complete' :
+              'pending start',
+      signStatus: undefined,
+      equipment: {
+        "4' TYPE III": formData["4_type_3"],
+        "6' TYPE III": formData["6_type_3"],
+        "8' TYPE III": formData["8_type_3"],
+        'SQ POST': formData.sq_post,
+        'H STAND': formData.h_stand,
+        VP: formData.vp,
+        SHARPS: formData.sharps,
+        'Y/B LITE': formData.y_b_lite,
+        'R/B LITE': formData.r_b_lite,
+        'W/B LITE': formData.w_b_lite,
+        TMA: formData.tma,
+        'C LITE': formData.c_lite,
+        'S. TRL': formData.speed_trailer,
+        'A. BOARD': formData.arrow_board,
+        'M. BOARD': formData.message_board,
+        'UC POST': formData.uc_post,
+        'SEQ LIGHT': formData.seq_light,
+      },
+      signList: []
+    }
 
+    onAddJob(newJob)
+    onOpenChange(false)
+    // Reset form
     setFormData({
       job_number: '',
       bid_number: '',
       job_location: '',
       contractor: '',
-      rate: '',
-      fringe: '',
-      is_rated: true,
       start_date: '',
       end_date: '',
-      type: 'Public',
-      office: 'Hatfield',
       pm: 'NELSON',
+      office: 'Hatfield',
+      type: 'Public',
       job_status: 'ONGOING',
       "4_type_3": 0,
       "6_type_3": 0,
@@ -97,8 +131,6 @@ export default function AddJobDialog({ open, onOpenChange, onAddJob }: AddJobDia
       uc_post: 0,
       seq_light: 0,
     })
-
-    onOpenChange(false)
   }
 
   return (
@@ -110,8 +142,8 @@ export default function AddJobDialog({ open, onOpenChange, onAddJob }: AddJobDia
             Enter the details for the new traffic control job.
           </DialogDescription>
         </DialogHeader>
-
         <form onSubmit={handleSubmit} className="space-y-4">
+          {/* All your existing inputs — unchanged */}
           <div className="grid grid-cols-2 gap-4">
             <div>
               <Label>Job Number *</Label>
@@ -130,7 +162,6 @@ export default function AddJobDialog({ open, onOpenChange, onAddJob }: AddJobDia
               />
             </div>
           </div>
-
           <div>
             <Label>Location *</Label>
             <Input
@@ -140,7 +171,6 @@ export default function AddJobDialog({ open, onOpenChange, onAddJob }: AddJobDia
               required
             />
           </div>
-
           <div>
             <Label>Contractor *</Label>
             <Input
@@ -150,14 +180,11 @@ export default function AddJobDialog({ open, onOpenChange, onAddJob }: AddJobDia
               required
             />
           </div>
-
           <div className="grid grid-cols-3 gap-4">
             <div>
               <Label>Project Manager</Label>
               <Select value={formData.pm} onValueChange={(v) => setFormData({ ...formData, pm: v })}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
+                <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="NELSON">Nelson</SelectItem>
                   <SelectItem value="GRESH">Gresh</SelectItem>
@@ -166,26 +193,20 @@ export default function AddJobDialog({ open, onOpenChange, onAddJob }: AddJobDia
                 </SelectContent>
               </Select>
             </div>
-
             <div>
               <Label>Type</Label>
-              <Select value={formData.type} onValueChange={(v) => setFormData({ ...formData, type: v })}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
+              <Select value={formData.type} onValueChange={(v) => setFormData({ ...formData, type: v as 'Public' | 'Private' })}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="Public">Public</SelectItem>
                   <SelectItem value="Private">Private</SelectItem>
                 </SelectContent>
               </Select>
             </div>
-
             <div>
               <Label>Office</Label>
               <Select value={formData.office} onValueChange={(v) => setFormData({ ...formData, office: v })}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
+                <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="Hatfield">Hatfield</SelectItem>
                   <SelectItem value="Turbotville">Turbotville</SelectItem>
@@ -194,7 +215,6 @@ export default function AddJobDialog({ open, onOpenChange, onAddJob }: AddJobDia
               </Select>
             </div>
           </div>
-
           <div className="grid grid-cols-2 gap-4">
             <div>
               <Label>Start Date *</Label>
@@ -214,13 +234,10 @@ export default function AddJobDialog({ open, onOpenChange, onAddJob }: AddJobDia
               />
             </div>
           </div>
-
           <div>
             <Label>Status</Label>
-            <Select value={formData.job_status} onValueChange={(v) => setFormData({ ...formData, job_status: v })}>
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
+            <Select value={formData.job_status} onValueChange={(v) => setFormData({ ...formData, job_status: v as any })}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="ONGOING">Ongoing</SelectItem>
                 <SelectItem value="COMPLETE">Complete</SelectItem>
@@ -229,7 +246,6 @@ export default function AddJobDialog({ open, onOpenChange, onAddJob }: AddJobDia
               </SelectContent>
             </Select>
           </div>
-
           <DialogFooter>
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
               Cancel
