@@ -1,7 +1,6 @@
 "use client"
 
 import type React from "react"
-
 import { useState } from "react"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { ArrowUpDown, ArrowUp, ArrowDown, ChevronLeft, ChevronRight, MoreHorizontal } from "lucide-react"
@@ -11,6 +10,7 @@ import EditJobDialog from "./edit-job-dialog"
 import JobDetailDialog from "./job-detail-dialog"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent } from "@/components/ui/card"
+import type { Job } from '@/lib/jobs'
 
 interface JobsDataTableProps {
   jobs: Job[]
