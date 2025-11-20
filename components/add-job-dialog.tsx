@@ -19,232 +19,215 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { type Job } from '@/lib/dummy-data'
 
 interface AddJobDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
-  onAddJob: (job: Omit<Job, 'id'>) => void
+  onAddJob: (job: any) => void
 }
 
 export default function AddJobDialog({ open, onOpenChange, onAddJob }: AddJobDialogProps) {
   const [formData, setFormData] = useState({
-    jobName: '',
-    jobNumber: '',
-    bidNumber: '',
-    location: '',
+    job_number: '',
+    bid_number: '',
+    job_location: '',
     contractor: '',
-    projectManager: 'john nelson',
-    branch: 'hatfield',
-    startDate: '',
-    endDate: '',
-    status: 'scheduled' as Job['status'],
+    rate: '',
+    fringe: '',
+    is_rated: true,
+    start_date: '',
+    end_date: '',
+    type: 'Public',
+    office: 'Hatfield',
+    pm: 'NELSON',
+    job_status: 'ONGOING',
+    "4_type_3": 0,
+    "6_type_3": 0,
+    "8_type_3": 0,
+    sq_post: 0,
+    h_stand: 0,
+    vp: 0,
+    sharps: 0,
+    y_b_lite: 0,
+    r_b_lite: 0,
+    w_b_lite: 0,
+    tma: 0,
+    c_lite: 0,
+    speed_trailer: 0,
+    arrow_board: 0,
+    message_board: 0,
+    uc_post: 0,
+    seq_light: 0,
   })
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    
-    if (!formData.jobName || !formData.location || !formData.contractor || !formData.startDate || !formData.endDate) {
-      return
-    }
 
-    const newJob: Omit<Job, 'id'> = {
-      jobName: formData.jobName,
-      jobNumber: formData.jobNumber,
-      bidNumber: formData.bidNumber,
-      location: formData.location,
-      contractor: formData.contractor,
-      projectManager: formData.projectManager,
-      branch: formData.branch,
-      startDate: formData.startDate,
-      endDate: formData.endDate,
-      status: formData.status,
-      equipment: {
-        '4\' TYPE III': 0,
-        '6\' TYPE III': 0,
-        '8\' TYPE III': 0,
-        'SQ POST': 0,
-        'H STAND': 0,
-        'VP': 0,
-        'SHARPS': 0,
-        'Y/B LITE': 0,
-        'R/B LITE': 0,
-        'W/B LITE': 0,
-        'TMA': 0,
-        'C LITE': 0,
-        'S. TRL': 0,
-        'A. BOARD': 0,
-        'M. BOARD': 0,
-        'UC POST': 0,
-        'SEQ LIGHT': 0,
-      }
-    }
+    onAddJob(formData)
 
-    onAddJob(newJob)
-    
-    // Reset form
     setFormData({
-      jobName: '',
-      jobNumber: '',
-      bidNumber: '',
-      location: '',
+      job_number: '',
+      bid_number: '',
+      job_location: '',
       contractor: '',
-      projectManager: 'john nelson',
-      branch: 'hatfield',
-      startDate: '',
-      endDate: '',
-      status: 'scheduled',
+      rate: '',
+      fringe: '',
+      is_rated: true,
+      start_date: '',
+      end_date: '',
+      type: 'Public',
+      office: 'Hatfield',
+      pm: 'NELSON',
+      job_status: 'ONGOING',
+      "4_type_3": 0,
+      "6_type_3": 0,
+      "8_type_3": 0,
+      sq_post: 0,
+      h_stand: 0,
+      vp: 0,
+      sharps: 0,
+      y_b_lite: 0,
+      r_b_lite: 0,
+      w_b_lite: 0,
+      tma: 0,
+      c_lite: 0,
+      speed_trailer: 0,
+      arrow_board: 0,
+      message_board: 0,
+      uc_post: 0,
+      seq_light: 0,
     })
-    
+
     onOpenChange(false)
   }
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[500px]">
+      <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Add New Job</DialogTitle>
           <DialogDescription>
             Enter the details for the new traffic control job.
           </DialogDescription>
         </DialogHeader>
-        
-        <form onSubmit={handleSubmit}>
-          <div className="grid gap-4 py-4">
-            <div className="grid gap-2">
-              <Label htmlFor="jobName">Job Name</Label>
+
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <Label>Job Number *</Label>
               <Input
-                id="jobName"
-                value={formData.jobName}
-                onChange={(e) => setFormData(prev => ({ ...prev, jobName: e.target.value }))}
-                placeholder="Enter job name"
+                value={formData.job_number}
+                onChange={(e) => setFormData({ ...formData, job_number: e.target.value })}
+                placeholder="22-2025123"
                 required
               />
             </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div className="grid gap-2">
-                <Label htmlFor="jobNumber">Job Number</Label>
-                <Input
-                  id="jobNumber"
-                  value={formData.jobNumber}
-                  onChange={(e) => setFormData(prev => ({ ...prev, jobNumber: e.target.value }))}
-                  placeholder="JOB-0001"
-                  required
-                />
-              </div>
-              <div className="grid gap-2">
-                <Label htmlFor="bidNumber">Bid Number</Label>
-                <Input
-                  id="bidNumber"
-                  value={formData.bidNumber}
-                  onChange={(e) => setFormData(prev => ({ ...prev, bidNumber: e.target.value }))}
-                  placeholder="BID-0001"
-                  required
-                />
-              </div>
-            </div>
-
-            <div className="grid gap-2">
-              <Label htmlFor="location">Location</Label>
+            <div>
+              <Label>Bid Number</Label>
               <Input
-                id="location"
-                value={formData.location}
-                onChange={(e) => setFormData(prev => ({ ...prev, location: e.target.value }))}
-                placeholder="Enter location"
-                required
+                value={formData.bid_number}
+                onChange={(e) => setFormData({ ...formData, bid_number: e.target.value })}
               />
             </div>
+          </div>
 
-            <div className="grid gap-2">
-              <Label htmlFor="contractor">Contractor</Label>
-              <Input
-                id="contractor"
-                value={formData.contractor}
-                onChange={(e) => setFormData(prev => ({ ...prev, contractor: e.target.value }))}
-                placeholder="Enter contractor name"
-                required
-              />
-            </div>
+          <div>
+            <Label>Location *</Label>
+            <Input
+              value={formData.job_location}
+              onChange={(e) => setFormData({ ...formData, job_location: e.target.value })}
+              placeholder="SR 202 Section 61N Montgomery County"
+              required
+            />
+          </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              <div className="grid gap-2">
-                <Label htmlFor="projectManager">Project Manager</Label>
-                <Select
-                  value={formData.projectManager}
-                  onValueChange={(value) => setFormData(prev => ({ ...prev, projectManager: value }))}
-                >
-                  <SelectTrigger id="projectManager">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="john nelson">John Nelson</SelectItem>
-                    <SelectItem value="larry long">Larry Long</SelectItem>
-                    <SelectItem value="jim redden">Jim Redden</SelectItem>
-                    <SelectItem value="richard gresh">Richard Gresh</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+          <div>
+            <Label>Contractor *</Label>
+            <Input
+              value={formData.contractor}
+              onChange={(e) => setFormData({ ...formData, contractor: e.target.value })}
+              placeholder="James D. Morrissey"
+              required
+            />
+          </div>
 
-              <div className="grid gap-2">
-                <Label htmlFor="branch">Branch</Label>
-                <Select
-                  value={formData.branch}
-                  onValueChange={(value) => setFormData(prev => ({ ...prev, branch: value }))}
-                >
-                  <SelectTrigger id="branch">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="hatfield">Hatfield</SelectItem>
-                    <SelectItem value="turbotville">Turbotville</SelectItem>
-                    <SelectItem value="bedford">Bedford</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div className="grid gap-2">
-                <Label htmlFor="startDate">Start Date</Label>
-                <Input
-                  id="startDate"
-                  type="date"
-                  value={formData.startDate}
-                  onChange={(e) => setFormData(prev => ({ ...prev, startDate: e.target.value }))}
-                  required
-                />
-              </div>
-
-              <div className="grid gap-2">
-                <Label htmlFor="endDate">End Date</Label>
-                <Input
-                  id="endDate"
-                  type="date"
-                  value={formData.endDate}
-                  onChange={(e) => setFormData(prev => ({ ...prev, endDate: e.target.value }))}
-                  required
-                />
-              </div>
-            </div>
-
-            <div className="grid gap-2">
-              <Label htmlFor="status">Status</Label>
-              <Select
-                value={formData.status}
-                onValueChange={(value) => setFormData(prev => ({ ...prev, status: value as Job['status'] }))}
-              >
-                <SelectTrigger id="status">
+          <div className="grid grid-cols-3 gap-4">
+            <div>
+              <Label>Project Manager</Label>
+              <Select value={formData.pm} onValueChange={(v) => setFormData({ ...formData, pm: v })}>
+                <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="scheduled">Scheduled</SelectItem>
-                  <SelectItem value="active">Active</SelectItem>
-                  <SelectItem value="completed">Completed</SelectItem>
-                  <SelectItem value="delayed">Delayed</SelectItem>
+                  <SelectItem value="NELSON">Nelson</SelectItem>
+                  <SelectItem value="GRESH">Gresh</SelectItem>
+                  <SelectItem value="LONG">Long</SelectItem>
+                  <SelectItem value="REDDEN">Redden</SelectItem>
                 </SelectContent>
               </Select>
             </div>
+
+            <div>
+              <Label>Type</Label>
+              <Select value={formData.type} onValueChange={(v) => setFormData({ ...formData, type: v })}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Public">Public</SelectItem>
+                  <SelectItem value="Private">Private</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div>
+              <Label>Office</Label>
+              <Select value={formData.office} onValueChange={(v) => setFormData({ ...formData, office: v })}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Hatfield">Hatfield</SelectItem>
+                  <SelectItem value="Turbotville">Turbotville</SelectItem>
+                  <SelectItem value="Bedford">Bedford</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <Label>Start Date *</Label>
+              <Input
+                type="date"
+                value={formData.start_date}
+                onChange={(e) => setFormData({ ...formData, start_date: e.target.value })}
+                required
+              />
+            </div>
+            <div>
+              <Label>End Date</Label>
+              <Input
+                type="date"
+                value={formData.end_date}
+                onChange={(e) => setFormData({ ...formData, end_date: e.target.value })}
+              />
+            </div>
+          </div>
+
+          <div>
+            <Label>Status</Label>
+            <Select value={formData.job_status} onValueChange={(v) => setFormData({ ...formData, job_status: v })}>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="ONGOING">Ongoing</SelectItem>
+                <SelectItem value="COMPLETE">Complete</SelectItem>
+                <SelectItem value="PENDING START">Pending Start</SelectItem>
+                <SelectItem value="NOT STARTED">Not Started</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
 
           <DialogFooter>
