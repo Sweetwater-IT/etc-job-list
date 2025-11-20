@@ -185,27 +185,35 @@ export default function EquipmentSummary({ jobs }: EquipmentSummaryProps) {
 
   const exportToExcel = () => {
     const items = reportTab === 'equipment' ? needToOrderEquipment : needToOrderSigns
-    if (items.length === 0) return alert('No items to export')
-
-    let csv = reportTab === 'equipment'
-      ? 'Equipment,Current Inventory,In Use,Going Out,Returning,Need to Order\n'
-      : 'MUTCD Code,Description,Current Inventory,In Use,Going Out,Returning,Need to Order\n'
-
-    items.forEach(item => {
-      if (reportTab === 'equipment') {
-        csv += `${item.name},${item.currentInventory},${item.inUse},${item.goingOut},${item.returning},${item.needToOrder}\n`
-      } else {
-        csv += `${item.code},${item.description},${item.currentInventory},${item.inUse},${item.goingOut},${item.returning},${item.needToOrder}\n`
-      }
-    })
-
-    const blob = new Blob([csv], { type: 'text/csv' })
-    const url = URL.createObjectURL(blob)
+  
+    if (items.length === 0) {
+      alert('No items to export')
+      return
+    }
+  
+    let csvContent = ''
+  
+    if (reportTab === 'equipment') {
+      csvContent = 'Equipment,Current Inventory,In Use,Going Out,Returning,Need to Order\n'
+      items.forEach((item) => {
+        const eq = item as { name: string; currentInventory: number; inUse: number; goingOut: number; returning: number; needToOrder: number }
+        csvContent += `${eq.name},${eq.currentInventory},${eq.inUse},${eq.goingOut},${eq.returning},${eq.needToOrder}\n`
+      })
+    } else {
+      csvContent = 'MUTCD Code,Description,Current Inventory,In Use,Going Out,Returning,Need to Order\n'
+      items.forEach((item) => {
+        const sign = item as { code: string; description: string; currentInventory: number; inUse: number; goingOut: number; returning: number; needToOrder: number }
+        csvContent += `${sign.code},${sign.description},${sign.currentInventory},${sign.inUse},${sign.goingOut},${sign.returning},${sign.needToOrder}\n`
+      })
+    }
+  
+    const blob = new Blob([csvContent], { type: 'text/csv' })
+    const url = window.URL.createObjectURL(blob)
     const a = document.createElement('a')
     a.href = url
-    a.download = `need-to-order-${reportTab}-${today}.csv`
+    a.download = `need-to-order-${reportTab}-${new Date().toISOString().split('T')[0]}.csv`
     a.click()
-    URL.revokeObjectURL(url)
+    window.URL.revokeObjectURL(url)
   }
   
   return (
