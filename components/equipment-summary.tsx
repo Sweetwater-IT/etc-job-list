@@ -239,26 +239,28 @@ export default function EquipmentSummary({ jobs }: EquipmentSummaryProps) {
 
   const exportToExcel = () => {
     const items = reportTab === 'equipment' ? needToOrderEquipment : needToOrderSigns
-    
+  
     if (items.length === 0) {
       alert('No items to export')
       return
     }
-
+  
     let csvContent = ''
-    
+  
     if (reportTab === 'equipment') {
       csvContent = 'Equipment,Current Inventory,In Use,Going Out,Returning,Need to Order\n'
       items.forEach(item => {
-        csvContent += `${item.name},${item.currentInventory},${item.inUse},${item.goingOut},${item.returning},${item.needToOrder}\n`
+        // "item" is equipment → has .name
+        csvContent += `${(item as any).name},${(item as any).currentInventory},${(item as any).inUse},${(item as any).goingOut},${(item as any).returning},${(item as any).needToOrder}\n`
       })
     } else {
       csvContent = 'MUTCD Code,Description,Current Inventory,In Use,Going Out,Returning,Need to Order\n'
-      needToOrderSigns.forEach(item => {
-        csvContent += `${item.code},${item.description},${item.currentInventory},${item.inUse},${item.goingOut},${item.returning},${item.needToOrder}\n`
+      items.forEach(item => {
+        // "item" is sign → has .code and .description
+        csvContent += `${(item as any).code},${(item as any).description},${(item as any).currentInventory},${(item as any).inUse},${(item as any).goingOut},${(item as any).returning},${(item as any).needToOrder}\n`
       })
     }
-
+  
     const blob = new Blob([csvContent], { type: 'text/csv' })
     const url = window.URL.createObjectURL(blob)
     const a = document.createElement('a')
@@ -267,7 +269,7 @@ export default function EquipmentSummary({ jobs }: EquipmentSummaryProps) {
     a.click()
     window.URL.revokeObjectURL(url)
   }
-
+  
   return (
     <div className="flex flex-col h-full bg-background">
       <div className="border-b border-border bg-card px-4 py-3">
