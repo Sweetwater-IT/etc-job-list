@@ -24,63 +24,69 @@ export default function TimelineBody({ jobs, viewType, startDate }: TimelineBody
   }
 
   const getBarPosition = (job: Job) => {
-    const jobStart = job.startDate ? new Date(job.startDate) : new Date()
-    
-    // If no end date → make it ongoing → extend far into the future
-    const jobEnd = job.endDate 
-      ? new Date(job.endDate) 
-      : new Date(jobStart.getFullYear() + 10, 0, 1)  // 10 years ahead
+    if (!job.startDate) return { left: '0%', width: '0%' }
   
-    let startUnit = 0
-    let endUnit = 0
-    let unitWidth = 0
-    let totalUnits = 0
+    const jobStart = new Date(job.startDate)
+    const jobEnd = job.endDate ? new Date(job.endDate) : null
+  
+    let left = '0%'
+    let width = '0%'
   
     if (viewType === 'week') {
-      totalUnits = 7
-      unitWidth = 100 / totalUnits
       const weekStart = new Date(startDate)
       weekStart.setHours(0, 0, 0, 0)
+      const dayOfWeek = weekStart.getDay()
+      weekStart.setDate(weekStart.getDate() - dayOfWeek) // Sunday start
   
-      const daysFromWeekStart = Math.floor((jobStart.getTime() - weekStart.getTime()) / (1000 * 60 * 60 * 24))
-      startUnit = Math.max(0, daysFromWeekStart)
+      const msPerDay = 1000 * 60 * 60 * 24
+      const daysFromStart = Math.floor((jobStart.getTime() - weekStart.getTime()) / msPerDay)
+      const endTime = jobEnd ? jobEnd.getTime() : jobStart.getTime() + 365 * msPerDay
+      const daysFromEnd = Math.floor((endTime - weekStart.getTime()) / msPerDay)
   
-      if (job.endDate) {
-        const endDays = Math.floor((jobEnd.getTime() - weekStart.getTime()) / (1000 * 60 * 60 * 24))
-        endUnit = endDays
-      } else {
-        endUnit = totalUnits  // ongoing → fill entire week
+      const startDay = Math.max(0, daysFromStart)
+      const endDay = Math.min(7, daysFromEnd + 1)
+  
+      if (startDay < 7) {
+        left = `${(startDay / 7) * 100}%`
+        width = `${Math.max((endDay - startDay) / 7 * 100, 8)}%`
       }
-    } 
-    else if (viewType === 'month') {
-      totalUnits = getDaysInMonth(startDate)
-      unitWidth = 48  // pixels per day
-      startUnit = jobStart.getDate() - 1
-      endUnit = job.endDate ? new Date(job.endDate).getDate() - 1 : totalUnits  // fill whole month
-    } 
-    else { // year view
-      totalUnits = 12
-      unitWidth = 100 / totalUnits
-      startUnit = jobStart.getMonth()
-      endUnit = job.endDate ? new Date(job.endDate).getMonth() : 11  // Dec
     }
+    else if (viewType === 'month') {
+      const viewStart = new Date(startDate.getFullYear(), startDate.getMonth(), 1)
+      const viewEnd = new Date(startDate.getFullYear(), startDate.getMonth() + 1, 0)
+      const daysInMonth = viewEnd.getDate()
   
-    // Clamp values so bar doesn't go off-screen
-    startUnit = Math.max(0, Math.min(startUnit, totalUnits))
-    endUnit = Math.max(startUnit, Math.min(endUnit + 0.99, totalUnits))  // +0.99 so it touches the end
+      const jobStartTime = jobStart.getTime()
+      const jobEndTime = jobEnd ? jobEnd.getTime() : Infinity
   
-    const leftValue = viewType === 'month' 
-      ? startUnit * unitWidth 
-      : (startUnit / totalUnits) * 100
+      const viewStartTime = viewStart.getTime()
+      const viewEndTime = viewEnd.getTime() + 24 * 60 * 60 * 1000 - 1
   
-    const widthValue = viewType === 'month'
-      ? (endUnit - startUnit) * unitWidth
-      : ((endUnit - startUnit) / totalUnits) * 100
+      if (jobStartTime > viewEndTime || jobEndTime < viewStartTime) {
+        return { left: '0%', width: '0%' }
+      }
   
-    const left = viewType === 'month' ? `${leftValue}px` : `${leftValue}%`
-    const width = viewType === 'month' 
-      ? `${Math.max(widthValue, 60)}px` 
-      : `${Math.max(widthValue, 8)}%`  // ensure visible
+      const startOffset = Math.max(0, Math.ceil((jobStartTime - viewStartTime) / (1000 * 60 * 60 * 24)))
+      const endOffset = jobEnd 
+        ? Math.min(daysInMonth, Math.floor((jobEndTime - viewStartTime) / (1000 * 60 * 60 * 24)) + 1)
+        : daysInMonth + 1
+  
+      const pixelPerDay = 48
+      left = `${startOffset * pixelPerDay}px`
+      width = `${Math.max((endOffset - startOffset) * pixelPerDay, 60)}px`
+    }
+    else if (viewType === 'year') {
+      const viewYear = startDate.getFullYear()
+      if (jobStart.getFullYear() > viewYear + 1 || (jobEnd && jobEnd.getFullYear() < viewYear - 1)) {
+        return { left: '0%', width: '0%' }
+      }
+  
+      const startMonth = jobStart.getFullYear() === viewYear ? jobStart.getMonth() : 0
+      const endMonth = jobEnd && jobEnd.getFullYear() === viewYear ? jobEnd.getMonth() : 11
+  
+      left = `${(startMonth / 12) * 100}%`
+      width = `${Math.max(((endMonth - startMonth + 1) / 12) * 100, 8)}%`
+    }
   
     return { left, width }
   }
