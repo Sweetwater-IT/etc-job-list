@@ -16,7 +16,7 @@ import JobsDataTable from "./jobs-data-table"
 import EquipmentSummary from "./equipment-summary"
 import AddJobDialog from "./add-job-dialog"
 import { getJobs } from '@/lib/jobs'
-import type { Job } from '@/lib/jobs'          // ← THIS IS THE ONLY CHANGE AT THE TOP
+import type { Job } from '@/lib/jobs'          
 import useSWR from 'swr'
 import { LayoutList, GanttChartSquare, Plus, Package } from "lucide-react"
 
@@ -26,7 +26,7 @@ type ViewType = "week" | "month" | "year"
 type DisplayMode = "gantt" | "list" | "equipment-summary"
 
 export default function GanttChart() {
-  const [viewType, setViewType] = useState<ViewType>("month")
+  const [viewType, setViewType] = useState<ViewType>("year")
   const [displayMode, setDisplayMode] = useState<DisplayMode>("gantt")
   const [searchTerm, setSearchTerm] = useState("")
   const [statusFilter, setStatusFilter] = useState<string[]>(["ONGOING", "COMPLETE", "PENDING START"])
