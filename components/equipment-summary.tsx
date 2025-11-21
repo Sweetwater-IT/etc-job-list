@@ -57,36 +57,44 @@ export default function EquipmentSummary({ jobs }: EquipmentSummaryProps) {
       currentInventory: number
       needToOrder: number
     }[] = []
-
-    const equipmentKeys = Object.keys(jobs[0]?.equipment || {}) as string[]
-
-    equipmentKeys.forEach((key) => {
-      let inUse = 0
-      let goingOut = 0
-      let returning = 0
-
+  
+    // Collect every equipment type from ALL jobs (not just first job!)
+    const allEquipmentKeys = Array.from(
+      new Set(jobs.flatMap(job => Object.keys(job.equipment)))
+    )
+  
+    allEquipmentKeys.forEach((key) => {
+      let inUse = 0      // deployed as of Master Date
+      let goingOut = 0   // starting after Master Date, before Forecast
+      let returning = 0  // ending after Master Date, before Forecast
+  
       jobs.forEach((job) => {
-        const jobStart = new Date(job.startDate)
-        const jobEnd = job.endDate ? new Date(job.endDate) : new Date(2099, 11, 31)
         const qty = job.equipment[key] ?? 0
-
         if (qty === 0) return
-
+  
+        const jobStart = new Date(job.startDate)
+        const jobEnd = job.endDate ? new Date(job.endDate) : new Date(2099, 11, 31)  // ongoing forever
+  
+        // IN USE: active on Master Date
         if (jobStart <= masterDateObj && jobEnd >= masterDateObj && job.status === 'on-going') {
           inUse += qty
         }
-        if (jobStart >= masterDateObj && jobStart <= forecastDateObj) {
+  
+        // GOING OUT: starts after Master Date, by Forecast Date
+        if (jobStart > masterDateObj && jobStart <= forecastDateObj) {
           goingOut += qty
         }
-        if (jobEnd >= masterDateObj && jobEnd <= forecastDateObj && (job.status === 'on-going' || job.status === 'complete')) {
+  
+        // RETURNING: ends after Master Date, by Forecast Date
+        if (jobEnd > masterDateObj && jobEnd <= forecastDateObj) {
           returning += qty
         }
       })
-
+  
       const currentInventory = equipmentInventory[key] ?? 0
-      const availableAfterProjection = currentInventory + returning - inUse - goingOut
-      const needToOrder = availableAfterProjection < 0 ? Math.abs(availableAfterProjection) : 0
-
+      const projectedAvailable = currentInventory + returning - inUse - goingOut
+      const needToOrder = projectedAvailable < 0 ? Math.abs(projectedAvailable) : 0
+  
       summary.push({
         name: key,
         inUse,
@@ -96,7 +104,7 @@ export default function EquipmentSummary({ jobs }: EquipmentSummaryProps) {
         needToOrder,
       })
     })
-
+  
     return summary.sort((a, b) => a.name.localeCompare(b.name))
   }, [jobs, masterDateObj, forecastDateObj, equipmentInventory])
 
@@ -303,136 +311,134 @@ export default function EquipmentSummary({ jobs }: EquipmentSummaryProps) {
         </div>
       </div>
 
-      <div className="flex-1 overflow-auto">
-        {summaryTab === 'equipment' ? (
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="text-xs font-semibold sticky top-0 bg-card z-10 py-3">Equipment</TableHead>
-                <TableHead className="text-xs font-semibold text-right sticky top-0 bg-card z-10 py-3">Current Inventory</TableHead>
-                <TableHead className="text-xs font-semibold text-right sticky top-0 bg-card z-10 py-3">In Use (on {masterDate})</TableHead>
-                <TableHead className="text-xs font-semibold text-right sticky top-0 bg-card z-10 py-3">Going Out (by {forecastDate})</TableHead>
-                <TableHead className="text-xs font-semibold text-right sticky top-0 bg-card z-10 py-3">Returning (by {forecastDate})</TableHead>
-                <TableHead className="text-xs font-semibold text-right sticky top-0 bg-card z-10 py-3">Need to Order</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredEquipmentSummary.length > 0 ? (
-                filteredEquipmentSummary.map((item) => (
-                  <TableRow key={item.name}>
-                    <TableCell className="text-xs font-medium py-3">{item.name}</TableCell>
-                    <TableCell className="text-xs text-right py-3">
-                      {editingEquipment === item.name ? (
-                        <Input
-                          type="number"
-                          min={0}
-                          autoFocus
-                          defaultValue={item.currentInventory}
-                          onBlur={(e) => handleEquipmentInventoryChange(item.name, parseInt(e.target.value) || 0)}
-                          onKeyDown={(e) => {
-                            if (e.key === 'Enter') {
-                              handleEquipmentInventoryChange(item.name, parseInt(e.currentTarget.value) || 0)
-                            }
-                          }}
-                          className="w-16 h-6 text-xs text-right"
-                        />
-                      ) : (
-                        <button
-                          onClick={() => setEditingEquipment(item.name)}
-                          className="flex items-center gap-1 ml-auto hover:text-foreground"
-                        >
-                          {item.currentInventory}
-                          <Pencil className="w-3 h-3 opacity-50" />
-                        </button>
-                      )}
-                    </TableCell>
-                    <TableCell className="text-xs text-right py-3">{item.inUse}</TableCell>
-                    <TableCell className="text-xs text-right text-amber-700 py-3">{item.goingOut}</TableCell>
-                    <TableCell className="text-xs text-right text-emerald-700 py-3">{item.returning}</TableCell>
-                    <TableCell className="text-xs text-right font-semibold py-3">
-                      {item.needToOrder > 0 ? (
-                        <span className="text-red-700 font-bold">{item.needToOrder}</span>
-                      ) : (
-                        <span className="text-muted-foreground">-</span>
-                      )}
+      <div className="flex-1 overflow-auto px-6 py-4">  {/* ← Side padding + top/bottom breathing room */}
+        <div className="overflow-x-auto border border-border rounded-lg bg-card">
+          {summaryTab === 'equipment' ? (
+            <Table className="min-w-[1200px]">
+              <TableHeader>
+                <TableRow className="bg-muted/40">
+                  <TableHead className="w-64 sticky top-0 bg-muted/40 z-10 font-semibold">Equipment</TableHead>
+                  <TableHead className="w-32 text-right sticky top-0 bg-muted/40 z-10">Current Inventory</TableHead>
+                  <TableHead className="w-32 text-right sticky top-0 bg-muted/40 z-10">In Use ({masterDate})</TableHead>
+                  <TableHead className="w-32 text-right sticky top-0 bg-muted/40 z-10">Going Out</TableHead>
+                  <TableHead className="w-32 text-right sticky top-0 bg-muted/40 z-10">Returning</TableHead>
+                  <TableHead className="w-32 text-right sticky top-0 bg-muted/40 z-10 font-bold">Need to Order</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filteredEquipmentSummary.length > 0 ? (
+                  filteredEquipmentSummary.map((item) => (
+                    <TableRow key={item.name} className="hover:bg-muted/30 transition-colors">
+                      <TableCell className="font-medium truncate" title={item.name}>
+                        {item.name}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        {editingEquipment === item.name ? (
+                          <Input
+                            type="number"
+                            min={0}
+                            autoFocus
+                            defaultValue={item.currentInventory}
+                            onBlur={(e) => handleEquipmentInventoryChange(item.name, parseInt(e.target.value) || 0)}
+                            onKeyDown={(e) => e.key === 'Enter' && handleEquipmentInventoryChange(item.name, parseInt(e.currentTarget.value) || 0)}
+                            className="w-20 h-8 text-right"
+                          />
+                        ) : (
+                          <button
+                            onClick={() => setEditingEquipment(item.name)}
+                            className="flex items-center justify-end gap-1 hover:text-foreground"
+                          >
+                            {item.currentInventory}
+                            <Pencil className="w-3.5 h-3.5 opacity-50" />
+                          </button>
+                        )}
+                      </TableCell>
+                      <TableCell className="text-right">{item.inUse}</TableCell>
+                      <TableCell className="text-right text-amber-700 font-medium">{item.goingOut}</TableCell>
+                      <TableCell className="text-right text-emerald-700 font-medium">{item.returning}</TableCell>
+                      <TableCell className="text-right font-bold">
+                        {item.needToOrder > 0 ? (
+                          <span className="text-red-600">{item.needToOrder}</span>
+                        ) : (
+                          <span className="text-muted-foreground">—</span>
+                        )}
+                      </TableCell>
+                    </TableRow>
+                  ))
+                ) : (
+                  <TableRow>
+                    <TableCell colSpan={6} className="text-center py-12 text-muted-foreground">
+                      No equipment found matching "{equipmentSearch}"
                     </TableCell>
                   </TableRow>
-                ))
-              ) : (
-                <TableRow>
-                  <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
-                    No equipment found matching "{equipmentSearch}"
-                  </TableCell>
+                )}
+              </TableBody>
+            </Table>
+          ) : (
+            <Table className="min-w-[1400px]">
+              <TableHeader>
+                <TableRow className="bg-muted/40">
+                  <TableHead className="w-32 sticky top-0 bg-muted/40 z-10">MUTCD Code</TableHead>
+                  <TableHead className="w-96 sticky top-0 bg-muted/40 z-10">Description</TableHead>
+                  <TableHead className="w-32 text-right sticky top-0 bg-muted/40 z-10">Current Inventory</TableHead>
+                  <TableHead className="w-32 text-right sticky top-0 bg-muted/40 z-10">In Use ({masterDate})</TableHead>
+                  <TableHead className="w-32 text-right sticky top-0 bg-muted/40 z-10">Going Out</TableHead>
+                  <TableHead className="w-32 text-right sticky top-0 bg-muted/40 z-10">Returning</TableHead>
+                  <TableHead className="w-32 text-right sticky top-0 bg-muted/40 z-10 font-bold">Need to Order</TableHead>
                 </TableRow>
-              )}
-            </TableBody>
-          </Table>
-        ) : (
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="text-xs font-semibold sticky top-0 bg-card z-10 py-3">MUTCD Code</TableHead>
-                <TableHead className="text-xs font-semibold sticky top-0 bg-card z-10 py-3">Description</TableHead>
-                <TableHead className="text-xs font-semibold text-right sticky top-0 bg-card z-10 py-3">Current Inventory</TableHead>
-                <TableHead className="text-xs font-semibold text-right sticky top-0 bg-card z-10 py-3">In Use (on {masterDate})</TableHead>
-                <TableHead className="text-xs font-semibold text-right sticky top-0 bg-card z-10 py-3">Going Out (by {forecastDate})</TableHead>
-                <TableHead className="text-xs font-semibold text-right sticky top-0 bg-card z-10 py-3">Returning (by {forecastDate})</TableHead>
-                <TableHead className="text-xs font-semibold text-right sticky top-0 bg-card z-10 py-3">Need to Order</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredSignsSummary.length > 0 ? (
-                filteredSignsSummary.map((item) => (
-                  <TableRow key={item.code}>
-                    <TableCell className="text-xs font-medium py-3">{item.code}</TableCell>
-                    <TableCell className="text-xs py-3">{item.description}</TableCell>
-                    <TableCell className="text-xs text-right py-3">
-                      {editingSign === item.code ? (
-                        <Input
-                          type="number"
-                          min={0}
-                          autoFocus
-                          defaultValue={item.currentInventory}
-                          onBlur={(e) => handleSignInventoryChange(item.code, parseInt(e.target.value) || 0)}
-                          onKeyDown={(e) => {
-                            if (e.key === 'Enter') {
-                              handleSignInventoryChange(item.code, parseInt(e.currentTarget.value) || 0)
-                            }
-                          }}
-                          className="w-16 h-6 text-xs text-right"
-                        />
-                      ) : (
-                        <button
-                          onClick={() => setEditingSign(item.code)}
-                          className="flex items-center gap-1 ml-auto hover:text-foreground"
-                        >
-                          {item.currentInventory}
-                          <Pencil className="w-3 h-3 opacity-50" />
-                        </button>
-                      )}
-                    </TableCell>
-                    <TableCell className="text-xs text-right py-3">{item.inUse}</TableCell>
-                    <TableCell className="text-xs text-right text-amber-700 py-3">{item.goingOut}</TableCell>
-                    <TableCell className="text-xs text-right text-emerald-700 py-3">{item.returning}</TableCell>
-                    <TableCell className="text-xs text-right font-semibold py-3">
-                      {item.needToOrder > 0 ? (
-                        <span className="text-red-700 font-bold">{item.needToOrder}</span>
-                      ) : (
-                        <span className="text-muted-foreground">-</span>
-                      )}
+              </TableHeader>
+              <TableBody>
+                {filteredSignsSummary.length > 0 ? (
+                  filteredSignsSummary.map((item) => (
+                    <TableRow key={item.code} className="hover:bg-muted/30 transition-colors">
+                      <TableCell className="font-mono font-medium">{item.code}</TableCell>
+                      <TableCell className="truncate" title={item.description}>
+                        {item.description}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        {editingSign === item.code ? (
+                          <Input
+                            type="number"
+                            min={0}
+                            autoFocus
+                            defaultValue={item.currentInventory}
+                            onBlur={(e) => handleSignInventoryChange(item.code, parseInt(e.target.value) || 0)}
+                            onKeyDown={(e) => e.key === 'Enter' && handleSignInventoryChange(item.code, parseInt(e.currentTarget.value) || 0)}
+                            className="w-20 h-8 text-right"
+                          />
+                        ) : (
+                          <button
+                            onClick={() => setEditingSign(item.code)}
+                            className="flex items-center justify-end gap-1 hover:text-foreground"
+                          >
+                            {item.currentInventory}
+                            <Pencil className="w-3.5 h-3.5 opacity-50" />
+                          </button>
+                        )}
+                      </TableCell>
+                      <TableCell className="text-right">{item.inUse}</TableCell>
+                      <TableCell className="text-right text-amber-700 font-medium">{item.goingOut}</TableCell>
+                      <TableCell className="text-right text-emerald-700 font-medium">{item.returning}</TableCell>
+                      <TableCell className="text-right font-bold">
+                        {item.needToOrder > 0 ? (
+                          <span className="text-red-600">{item.needToOrder}</span>
+                        ) : (
+                          <span className="text-muted-foreground">—</span>
+                        )}
+                      </TableCell>
+                    </TableRow>
+                  ))
+                ) : (
+                  <TableRow>
+                    <TableCell colSpan={7} className="text-center py-12 text-muted-foreground">
+                      No signs found matching "{signSearch}"
                     </TableCell>
                   </TableRow>
-                ))
-              ) : (
-                <TableRow>
-                  <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
-                    No signs found matching "{signSearch}"
-                  </TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
-        )}
+                )}
+              </TableBody>
+            </Table>
+          )}
+        </div>
       </div>
 
       <Dialog open={showNeedToOrderReport} onOpenChange={setShowNeedToOrderReport}>
