@@ -318,7 +318,9 @@ export default function EquipmentSummary({ jobs }: EquipmentSummaryProps) {
             <TableHeader>
               <TableRow className="bg-muted/40">
                 <TableHead className="w-64 sticky top-0 bg-muted/40 z-10 font-semibold">Equipment</TableHead>
-                <TableHead className="w-32 text-right sticky top-0 bg-muted/40 z-10">Current Inventory</TableHead>
+                <<TableHead className="w-32 text-right sticky top-0 bg-muted/40 z-10 h-14 flex items-center justify-end">
+                  Current Inventory
+                </TableHead>
                 <TableHead className="w-40 text-right sticky top-0 bg-muted/40 z-10">
                   In Use<br />
                   <span className="text-xs font-normal text-muted-foreground">(on {masterDate})</span>
@@ -389,7 +391,9 @@ export default function EquipmentSummary({ jobs }: EquipmentSummaryProps) {
               <TableRow className="bg-muted/40">
                 <TableHead className="w-32 sticky top-0 bg-muted/40 z-10">MUTCD Code</TableHead>
                 <TableHead className="w-96 sticky top-0 bg-muted/40 z-10">Description</TableHead>
-                <TableHead className="w-32 text-right sticky top-0 bg-muted/40 z-10">Current Inventory</TableHead>
+                <TableHead className="w-32 text-right sticky top-0 bg-muted/40 z-10 h-14 flex items-center justify-end">
+                  Current Inventory
+                </TableHead>
                 <TableHead className="w-40 text-right sticky top-0 bg-muted/40 z-10">
                   In Use<br />
                   <span className="text-xs font-normal text-muted-foreground">(on {masterDate})</span>
