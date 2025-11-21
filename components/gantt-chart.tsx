@@ -38,31 +38,80 @@ export default function GanttChart() {
   const { data: jobs = [], mutate } = useSWR<Job[]>('jobs', fetcher, { fallbackData: [] })
 
   const filteredJobs = useMemo(() => {
-    return jobs
-      .filter((job) => {
-        const search = searchTerm.toLowerCase()
-        const matchesSearch =
-          job.jobNumber.toLowerCase().includes(search) ||
-          (job.location || "").toLowerCase().includes(search) ||
-          (job.contractor || "").toLowerCase().includes(search)
-
-        // Map frontend status → DB status for filtering
-        const dbStatus = job.status === 'on-going' ? 'ONGOING' :
-                         job.status === 'complete' ? 'COMPLETE' :
-                         job.status === 'pending start' ? 'PENDING START' : 'NOT STARTED'
-        const matchesStatus = statusFilter.includes(dbStatus)
-
-        const matchesPM = pmFilter === "all" || job.projectManager.toUpperCase() === pmFilter
-        const matchesOffice = officeFilter === "all" || job.branch.toLowerCase() === officeFilter.toLowerCase()
-
-        return matchesSearch && matchesStatus && matchesPM && matchesOffice
+    let filtered = jobs
+  
+    // 1. Search filter
+    if (searchTerm) {
+      const term = searchTerm.toLowerCase()
+      filtered = filtered.filter(job =>
+        job.jobNumber.toLowerCase().includes(term) ||
+        (job.location || "").toLowerCase().includes(term) ||
+        (job.contractor || "").toLowerCase().includes(term)
+      )
+    }
+  
+    // 2. Status filter
+    const dbStatusMap: Record<string, string> = {
+      'on-going': 'ONGOING',
+      'complete': 'COMPLETE',
+      'pending start': 'PENDING START'
+    }
+    if (statusFilter.length > 0) {
+      filtered = filtered.filter(job => {
+        const dbStatus = dbStatusMap[job.status] || 'NOT STARTED'
+        return statusFilter.includes(dbStatus)
       })
-      .sort((a, b) => {
-        const dateA = a.startDate ? new Date(a.startDate).getTime() : 0
-        const dateB = b.startDate ? new Date(b.startDate).getTime() : 0
-        return dateB - dateA
+    }
+  
+    // 3. PM & Office filters
+    if (pmFilter !== 'all') {
+      filtered = filtered.filter(job => job.projectManager.toUpperCase() === pmFilter)
+    }
+    if (officeFilter !== 'all') {
+      filtered = filtered.filter(job => job.branch.toLowerCase() === officeFilter.toLowerCase())
+    }
+  
+    // 4. VIEW FILTER — THIS IS THE KEY PART
+    const now = Date.now()
+    const jobStartMs = (j: Job) => j.startDate ? new Date(j.startDate).getTime() : now
+    const jobEndMs = (j: Job) => j.endDate ? new Date(j.endDate).getTime() : Infinity
+  
+    if (viewType === 'week') {
+      const weekStart = new Date(startDate)
+      weekStart.setHours(0, 0, 0, 0)
+      const dayOfWeek = weekStart.getDay()
+      weekStart.setDate(weekStart.getDate() - dayOfWeek) // Sunday
+  
+      const weekEnd = new Date(weekStart)
+      weekEnd.setDate(weekEnd.getDate() + 6)
+      weekEnd.setHours(23, 59, 59, 999)
+  
+      filtered = filtered.filter(job =>
+        jobStartMs(job) <= weekEnd.getTime() && jobEndMs(job) >= weekStart.getTime()
+      )
+    }
+    else if (viewType === 'month') {
+      const year = startDate.getFullYear()
+      const month = startDate.getMonth()
+      const monthStart = new Date(year, month, 1)
+      const monthEnd = new Date(year, month + 1, 0, 23, 59, 59, 999)
+  
+      filtered = filtered.filter(job =>
+        jobStartMs(job) <= monthEnd.getTime() && jobEndMs(job) >= monthStart.getTime()
+      )
+    }
+    // Year view: show everything that touches the year or adjacent years
+    else if (viewType === 'year') {
+      const year = startDate.getFullYear()
+      filtered = filtered.filter(job => {
+        const startYear = new Date(job.startDate || '').getFullYear()
+        const endYear = job.endDate ? new Date(job.endDate).getFullYear() : year + 10
+        return startYear <= year + 1 && endYear >= year - 1
       })
-  }, [jobs, searchTerm, statusFilter, pmFilter, officeFilter])
+    }
+  
+    return filtered
+  }, [jobs, searchTerm, statusFilter, pmFilter, officeFilter, viewType, startDate])
 
   // Optional: real-time updates
   useEffect(() => {
