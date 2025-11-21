@@ -315,27 +315,22 @@ export default function EquipmentSummary({ jobs }: EquipmentSummaryProps) {
         <div className="overflow-x-auto border border-border rounded-lg bg-card">
           {summaryTab === 'equipment' ? (
             <Table className="min-w-[1200px]">
-            <TableHeader>
-              <TableRow className="bg-muted/40">
-                <TableHead className="w-64 sticky top-0 bg-muted/40 z-10 font-semibold">Equipment</TableHead>
-                <TableHead className="w-32 text-right sticky top-0 bg-muted/40 z-10 h-14 flex items-center justify-end">
-                  Current Inventory
-                </TableHead>
-                <TableHead className="w-40 text-right sticky top-0 bg-muted/40 z-10">
-                  In Use<br />
-                  <span className="text-xs font-normal text-muted-foreground">(on {masterDate})</span>
-                </TableHead>
-                <TableHead className="w-40 text-right sticky top-0 bg-muted/40 z-10">
-                  Going Out<br />
-                  <span className="text-xs font-normal text-muted-foreground">(by {forecastDate})</span>
-                </TableHead>
-                <TableHead className="w-40 text-right sticky top-0 bg-muted/40 z-10">
-                  Returning<br />
-                  <span className="text-xs font-normal text-muted-foreground">(by {forecastDate})</span>
-                </TableHead>
-                <TableHead className="w-32 text-right sticky top-0 bg-muted/40 z-10 font-bold">Need to Order</TableHead>
-              </TableRow>
-            </TableHeader>
+              <TableHeader>
+                <TableRow className="bg-muted/30 border-b border-border">
+                  <TableHead className="text-xs font-semibold sticky top-0 bg-card z-10 py-3">Equipment</TableHead>
+                  <TableHead className="text-xs font-semibold text-right sticky top-0 bg-card z-10 py-3">Current Inventory</TableHead>
+                  <TableHead className="text-xs font-semibold text-right sticky top-0 bg-card z-10 py-3">
+                    In Use (on {masterDate})
+                  </TableHead>
+                  <TableHead className="text-xs font-semibold text-right sticky top-0 bg-card z-10 py-3">
+                    Going Out (by {forecastDate})
+                  </TableHead>
+                  <TableHead className="text-xs font-semibold text-right sticky top-0 bg-card z-10 py-3">
+                    Returning (by {forecastDate})
+                  </TableHead>
+                  <TableHead className="text-xs font-semibold text-right sticky top-0 bg-card z-10 py-3">Need to Order</TableHead>
+                </TableRow>
+              </TableHeader>
               <TableBody>
                 {filteredEquipmentSummary.length > 0 ? (
                   filteredEquipmentSummary.map((item) => (
@@ -387,28 +382,22 @@ export default function EquipmentSummary({ jobs }: EquipmentSummaryProps) {
             </Table>
           ) : (
             <Table className="min-w-[1400px]">
-            <TableHeader>
-              <TableRow className="bg-muted/40">
-                <TableHead className="w-32 sticky top-0 bg-muted/40 z-10">MUTCD Code</TableHead>
-                <TableHead className="w-96 sticky top-0 bg-muted/40 z-10">Description</TableHead>
-                <TableHead className="w-32 text-right sticky top-0 bg-muted/40 z-10 h-14 flex items-center justify-end">
-                  Current Inventory
-                </TableHead>
-                <TableHead className="w-40 text-right sticky top-0 bg-muted/40 z-10">
-                  In Use<br />
-                  <span className="text-xs font-normal text-muted-foreground">(on {masterDate})</span>
-                </TableHead>
-                <TableHead className="w-40 text-right sticky top-0 bg-muted/40 z-10">
-                  Going Out<br />
-                  <span className="text-xs font-normal text-muted-foreground">(by {forecastDate})</span>
-                </TableHead>
-                <TableHead className="w-40 text-right sticky top-0 bg-muted/40 z-10">
-                  Returning<br />
-                  <span className="text-xs font-normal text-muted-foreground">(by {forecastDate})</span>
-                </TableHead>
-                <TableHead className="w-32 text-right sticky top-0 bg-muted/40 z-10 font-bold">Need to Order</TableHead>
-              </TableRow>
-            </TableHeader>
+              <TableHeader>
+                <TableRow className="bg-muted/30 border-b border-border">
+                  <TableHead className="text-xs font-semibold sticky top-0 bg-card z-10 py-3">Equipment</TableHead>
+                  <TableHead className="text-xs font-semibold text-right sticky top-0 bg-card z-10 py-3">Current Inventory</TableHead>
+                  <TableHead className="text-xs font-semibold text-right sticky top-0 bg-card z-10 py-3">
+                    In Use (on {masterDate})
+                  </TableHead>
+                  <TableHead className="text-xs font-semibold text-right sticky top-0 bg-card z-10 py-3">
+                    Going Out (by {forecastDate})
+                  </TableHead>
+                  <TableHead className="text-xs font-semibold text-right sticky top-0 bg-card z-10 py-3">
+                    Returning (by {forecastDate})
+                  </TableHead>
+                  <TableHead className="text-xs font-semibold text-right sticky top-0 bg-card z-10 py-3">Need to Order</TableHead>
+                </TableRow>
+              </TableHeader>
               <TableBody>
                 {filteredSignsSummary.length > 0 ? (
                   filteredSignsSummary.map((item) => (
