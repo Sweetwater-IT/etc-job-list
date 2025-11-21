@@ -338,27 +338,27 @@ export default function EquipmentSummary({ jobs }: EquipmentSummaryProps) {
                       <TableCell className="font-medium truncate" title={item.name}>
                         {item.name}
                       </TableCell>
-                      <TableCell className="text-right">
-                        {editingEquipment === item.name ? (
-                          <Input
-                            type="number"
-                            min={0}
-                            autoFocus
-                            defaultValue={item.currentInventory}
-                            onBlur={(e) => handleEquipmentInventoryChange(item.name, parseInt(e.target.value) || 0)}
-                            onKeyDown={(e) => e.key === 'Enter' && handleEquipmentInventoryChange(item.name, parseInt(e.currentTarget.value) || 0)}
-                            className="w-20 h-8 text-right"
-                          />
-                        ) : (
-                          <button
-                            onClick={() => setEditingEquipment(item.name)}
-                            className="flex items-center justify-end gap-1 hover:text-foreground"
-                          >
-                            {item.currentInventory}
-                            <Pencil className="w-3.5 h-3.5 opacity-50" />
-                          </button>
-                        )}
-                      </TableCell>
+                        <TableCell className="text-xs text-right py-3">
+                          {editingEquipment === item.name ? (
+                            <Input
+                              type="number"
+                              min={0}
+                              autoFocus
+                              defaultValue={item.currentInventory}
+                              onBlur={(e) => handleEquipmentInventoryChange(item.name, parseInt(e.target.value) || 0)}
+                              onKeyDown={(e) => e.key === 'Enter' && handleEquipmentInventoryChange(item.name, parseInt(e.currentTarget.value) || 0)}
+                              className="w-16 h-6 text-xs text-right"
+                            />
+                          ) : (
+                            <button
+                              onClick={() => setEditingEquipment(item.name)}
+                              className="flex items-center gap-1 ml-auto hover:text-foreground"
+                            >
+                              {item.currentInventory}
+                              <Pencil className="w-3 h-3 opacity-50" />
+                            </button>
+                          )}
+                        </TableCell>
                       <TableCell className="text-right">{item.inUse}</TableCell>
                       <TableCell className="text-right text-amber-700 font-medium">{item.goingOut}</TableCell>
                       <TableCell className="text-right text-emerald-700 font-medium">{item.returning}</TableCell>
@@ -406,27 +406,27 @@ export default function EquipmentSummary({ jobs }: EquipmentSummaryProps) {
                       <TableCell className="truncate" title={item.description}>
                         {item.description}
                       </TableCell>
-                      <TableCell className="text-right">
-                        {editingSign === item.code ? (
-                          <Input
-                            type="number"
-                            min={0}
-                            autoFocus
-                            defaultValue={item.currentInventory}
-                            onBlur={(e) => handleSignInventoryChange(item.code, parseInt(e.target.value) || 0)}
-                            onKeyDown={(e) => e.key === 'Enter' && handleSignInventoryChange(item.code, parseInt(e.currentTarget.value) || 0)}
-                            className="w-20 h-8 text-right"
-                          />
-                        ) : (
-                          <button
-                            onClick={() => setEditingSign(item.code)}
-                            className="flex items-center justify-end gap-1 hover:text-foreground"
-                          >
-                            {item.currentInventory}
-                            <Pencil className="w-3.5 h-3.5 opacity-50" />
-                          </button>
-                        )}
-                      </TableCell>
+                        <TableCell className="text-xs text-right py-3">
+                          {editingSign === item.code ? (
+                            <Input
+                              type="number"
+                              min={0}
+                              autoFocus
+                              defaultValue={item.currentInventory}
+                              onBlur={(e) => handleSignInventoryChange(item.code, parseInt(e.target.value) || 0)}
+                              onKeyDown={(e) => e.key === 'Enter' && handleSignInventoryChange(item.code, parseInt(e.currentTarget.value) || 0)}
+                              className="w-16 h-6 text-xs text-right"
+                            />
+                          ) : (
+                            <button
+                              onClick={() => setEditingSign(item.code)}
+                              className="flex items-center gap-1 ml-auto hover:text-foreground"
+                            >
+                              {item.currentInventory}
+                              <Pencil className="w-3 h-3 opacity-50" />
+                            </button>
+                          )}
+                        </TableCell>
                       <TableCell className="text-right">{item.inUse}</TableCell>
                       <TableCell className="text-right text-amber-700 font-medium">{item.goingOut}</TableCell>
                       <TableCell className="text-right text-emerald-700 font-medium">{item.returning}</TableCell>
