@@ -32,60 +32,85 @@ export default function TimelineBody({ jobs, viewType, startDate }: TimelineBody
     let left = '0%'
     let width = '0%'
   
+    const msPerDay = 24 * 60 * 60 * 1000
+  
     if (viewType === 'week') {
+      // Define exact visible week (Sunday → Saturday)
       const weekStart = new Date(startDate)
       weekStart.setHours(0, 0, 0, 0)
       const dayOfWeek = weekStart.getDay()
-      weekStart.setDate(weekStart.getDate() - dayOfWeek) // Sunday start
+      weekStart.setDate(weekStart.getDate() - dayOfWeek)
   
-      const msPerDay = 1000 * 60 * 60 * 24
-      const daysFromStart = Math.floor((jobStart.getTime() - weekStart.getTime()) / msPerDay)
-      const endTime = jobEnd ? jobEnd.getTime() : jobStart.getTime() + 365 * msPerDay
-      const daysFromEnd = Math.floor((endTime - weekStart.getTime()) / msPerDay)
+      const weekEnd = new Date(weekStart)
+      weekEnd.setDate(weekEnd.getDate() + 6)
+      weekEnd.setHours(23, 59, 59, 999)
   
-      const startDay = Math.max(0, daysFromStart)
-      const endDay = Math.min(7, daysFromEnd + 1)
+      const jobStartMs = jobStart.getTime()
+      const jobEndMs = jobEnd ? jobEnd.getTime() : Infinity
   
-      if (startDay < 7) {
-        left = `${(startDay / 7) * 100}%`
-        width = `${Math.max((endDay - startDay) / 7 * 100, 8)}%`
+      // Completely outside visible week? → hide
+      if (jobStartMs > weekEnd.getTime() || jobEndMs < weekStart.getTime()) {
+        return { left: '0%', width: '0%' }
+      }
+  
+      const startDay = Math.max(0, Math.floor((jobStartMs - weekStart.getTime()) / msPerDay))
+      const endDay = jobEnd 
+        ? Math.min(6, Math.floor((jobEndMs - weekStart.getTime()) / msPerDay))
+        : 6
+  
+      const visibleStart = Math.max(0, startDay)
+      const visibleEnd = Math.min(6, endDay)
+  
+      if (visibleStart <= visibleEnd) {
+        left = `${(visibleStart / 7) * 100}%`
+        width = `${Math.max((visibleEnd - visibleStart + 1) / 7 * 100, 10)}%`
       }
     }
     else if (viewType === 'month') {
-      const viewStart = new Date(startDate.getFullYear(), startDate.getMonth(), 1)
-      const viewEnd = new Date(startDate.getFullYear(), startDate.getMonth() + 1, 0)
+      const viewYear = startDate.getFullYear()
+      const viewMonth = startDate.getMonth()
+  
+      const viewStart = new Date(viewYear, viewMonth, 1, 0, 0, 0, 0)
+      const viewEnd = new Date(viewYear, viewMonth + 1, 0, 23, 59, 59, 999)
       const daysInMonth = viewEnd.getDate()
   
-      const jobStartTime = jobStart.getTime()
-      const jobEndTime = jobEnd ? jobEnd.getTime() : Infinity
+      const jobStartMs = jobStart.getTime()
+      const jobEndMs = jobEnd ? jobEnd.getTime() : Infinity
   
-      const viewStartTime = viewStart.getTime()
-      const viewEndTime = viewEnd.getTime() + 24 * 60 * 60 * 1000 - 1
-  
-      if (jobStartTime > viewEndTime || jobEndTime < viewStartTime) {
+      // No overlap with viewed month? → hide
+      if (jobStartMs > viewEnd.getTime() || jobEndMs < viewStart.getTime()) {
         return { left: '0%', width: '0%' }
       }
   
-      const startOffset = Math.max(0, Math.ceil((jobStartTime - viewStartTime) / (1000 * 60 * 60 * 24)))
-      const endOffset = jobEnd 
-        ? Math.min(daysInMonth, Math.floor((jobEndTime - viewStartTime) / (1000 * 60 * 60 * 24)) + 1)
-        : daysInMonth + 1
+      const startDay = Math.max(0, Math.ceil((jobStartMs - viewStart.getTime()) / msPerDay))
+      const endDay = jobEnd
+        ? Math.min(daysInMonth - 1, Math.floor((jobEndMs - viewStart.getTime()) / msPerDay))
+        : daysInMonth - 1
   
-      const pixelPerDay = 48
-      left = `${startOffset * pixelPerDay}px`
-      width = `${Math.max((endOffset - startOffset) * pixelPerDay, 60)}px`
+      const visibleStart = Math.max(0, startDay)
+      const visibleEnd = Math.min(daysInMonth - 1, endDay)
+  
+      if (visibleStart <= visibleEnd) {
+        left = `${visibleStart * 48}px`
+        width = `${Math.max((visibleEnd - visibleStart + 1) * 48, 60)}px`
+      }
     }
     else if (viewType === 'year') {
       const viewYear = startDate.getFullYear()
-      if (jobStart.getFullYear() > viewYear + 1 || (jobEnd && jobEnd.getFullYear() < viewYear - 1)) {
+  
+      const jobStartYear = jobStart.getFullYear()
+      const jobEndYear = jobEnd ? jobEnd.getFullYear() : Infinity
+  
+      // No overlap with viewed year or adjacent years? → hide
+      if (jobStartYear > viewYear + 1 || jobEndYear < viewYear - 1) {
         return { left: '0%', width: '0%' }
       }
   
-      const startMonth = jobStart.getFullYear() === viewYear ? jobStart.getMonth() : 0
-      const endMonth = jobEnd && jobEnd.getFullYear() === viewYear ? jobEnd.getMonth() : 11
+      const startMonth = jobStartYear === viewYear ? jobStart.getMonth() : 0
+      const endMonth = jobEnd && jobEndYear === viewYear ? jobEnd.getMonth() : 11
   
       left = `${(startMonth / 12) * 100}%`
-      width = `${Math.max(((endMonth - startMonth + 1) / 12) * 100, 8)}%`
+      width = `${Math.max((endMonth - startMonth + 1) / 12 * 100, 8)}%`
     }
   
     return { left, width }
