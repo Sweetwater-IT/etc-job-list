@@ -4,6 +4,7 @@ import { useState } from 'react'
 import JobDetailDialog from './job-detail-dialog'
 import JobTooltip from './job-tooltip'
 import type { Job } from '@/lib/jobs'
+import { parseLocalDate } from '@/lib/date-utils'
 
 interface TimelineBodyProps {
   jobs: Job[]
@@ -26,8 +27,8 @@ export default function TimelineBody({ jobs, viewType, startDate }: TimelineBody
   const getBarPosition = (job: Job) => {
     if (!job.startDate) return { left: '0%', width: '10%' }
   
-    const jobStart = new Date(job.startDate)
-    const jobEnd = job.endDate ? new Date(job.endDate) : null
+    const jobStart = parseLocalDate(job.startDate)!
+    const jobEnd = job.endDate ? parseLocalDate(job.endDate) : null
   
     const msPerDay = 24 * 60 * 60 * 1000
     let left = '0%'
