@@ -287,63 +287,71 @@ export default function JobsDataTable({ jobs, onUpdateJob }: JobsDataTableProps)
   return (
     <>
       <div className="flex flex-col h-full relative">
-        <div className="flex-1 overflow-auto">
-          <Table>
-            <TableHeader>
-              <TableRow className="border-b border-border">
-                <SortableHeader field="jobName">Job Name</SortableHeader>
-                <SortableHeader field="location">Location</SortableHeader>
-                <SortableHeader field="contractor">Contractor</SortableHeader>
-                <SortableHeader field="projectManager">Project Manager</SortableHeader>
-                <SortableHeader field="branch">Branch</SortableHeader>
-                <SortableHeader field="startDate">Start Date</SortableHeader>
-                <SortableHeader field="endDate">End Date</SortableHeader>
-                <SortableHeader field="status">Status</SortableHeader>
-                <TableHead className="sticky top-0 bg-card z-10 w-12"></TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {paginatedJobs.map((job) => (
-                <TableRow
-                  key={job.id}
-                  onClick={() => handleRowClick(job)}
-                  onMouseEnter={(e) => handleRowHover(job, e)}
-                  onMouseLeave={() => handleRowHover(null)}
-                  className="cursor-pointer hover:bg-muted/50"
-                >
-                  <TableCell className="font-medium py-3">{job.jobName}</TableCell>
-                  <TableCell className="py-3">{job.location}</TableCell>
-                  <TableCell className="py-3">{job.contractor}</TableCell>
-                  <TableCell className="capitalize py-3">{job.projectManager}</TableCell>
-                  <TableCell className="capitalize py-3">{job.branch}</TableCell>
-                  <TableCell className="py-3">{formatDate(job.startDate)}</TableCell>
-                  <TableCell className="py-3">{formatDate(job.endDate)}</TableCell>
-                  <TableCell className="py-3">{getStatusBadge(job.status)}</TableCell>
-                  <TableCell className="py-3">
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="sm" className="h-8 w-8 p-0" onClick={(e) => e.stopPropagation()}>
-                          <MoreHorizontal className="h-4 w-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuItem
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            handleEditJob(job)
-                          }}
-                        >
-                          Edit Job
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </TableCell>
+        <div className="flex-1 overflow-auto px-6">  {/* ← Adds nice side padding */}
+          <div className="overflow-x-auto border border-border rounded-lg">
+            <Table className="min-w-[1400px]">  {/* ← Forces table to be wide enough */}
+              <TableHeader>
+                <TableRow className="bg-muted/30">
+                  <SortableHeader field="jobName">Job Name</SortableHeader>
+                  <SortableHeader field="location">Location</SortableHeader>
+                  <SortableHeader field="contractor">Contractor</SortableHeader>
+                  <SortableHeader field="projectManager">PM</SortableHeader>
+                  <SortableHeader field="branch">Branch</SortableHeader>
+                  <SortableHeader field="startDate">Start</SortableHeader>
+                  <SortableHeader field="endDate">End</SortableHeader>
+                  <SortableHeader field="status">Status</SortableHeader>
+                  <TableHead className="sticky right-0 bg-muted/50 z-10 text-center w-20">
+                    Actions
+                  </TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+              </TableHeader>
+              <TableBody>
+                {paginatedJobs.map((job) => (
+                  <TableRow
+                    key={job.id}
+                    className="hover:bg-muted/50 transition-colors cursor-pointer"
+                    onClick={() => handleRowClick(job)}
+                    onMouseEnter={(e) => handleRowHover(job, e)}
+                    onMouseLeave={() => handleRowHover(null)}
+                  >
+                    <TableCell className="font-medium max-w-64 truncate" title={job.jobName}>
+                      {job.jobName}
+                    </TableCell>
+                    <TableCell className="max-w-56 truncate" title={job.location || ''}>
+                      {job.location || '—'}
+                    </TableCell>
+                    <TableCell className="max-w-56 truncate" title={job.contractor || ''}>
+                      {job.contractor || '—'}
+                    </TableCell>
+                    <TableCell className="capitalize">{job.projectManager}</TableCell>
+                    <TableCell className="capitalize">{job.branch}</TableCell>
+                    <TableCell>{formatDate(job.startDate)}</TableCell>
+                    <TableCell>{formatDate(job.endDate)}</TableCell>
+                    <TableCell>{getStatusBadge(job.status)}</TableCell>
+                    <TableCell
+                      className="sticky right-0 bg-card z-10 shadow-lg"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="icon" className="h-8 w-8">
+                            <MoreHorizontal className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem onClick={() => handleEditJob(job)}>
+                            Edit Job
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
         </div>
-
+        
         {hoveredJob && (
           <div
             className="fixed z-50 pointer-events-none"
