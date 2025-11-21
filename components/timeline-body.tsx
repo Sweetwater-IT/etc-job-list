@@ -83,7 +83,7 @@ export default function TimelineBody({ jobs, viewType, startDate }: TimelineBody
         ? Math.min(daysInMonth - 1, Math.floor((jobEndMs - monthStart.getTime()) / msPerDay))
         : daysInMonth - 1
   
-      const visibleDays = end581Day - startDay + 1
+      const visibleDays = endDay - startDay + 1
       if (visibleDays > 0) {
         left = `${startDay * 48}px`
         width = `${Math.max(visibleDays * 48, 60)}px`
